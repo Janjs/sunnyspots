@@ -14,6 +14,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://unpkg.com/protomaps-themes-base@4.3.0/dist/protomaps-themes-base.js"></script>
+      </head>
       <body>{children}</body>
     </html>
   );
