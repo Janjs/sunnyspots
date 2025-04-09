@@ -1,17 +1,12 @@
-import { Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import MapView from "@/app/components/MapView";
 
 export default function MapUI() {
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {/* Map container taking full screen */}
-      <div className="h-full w-full bg-slate-200">
-        {/* This would be replaced with an actual map component */}
-        <div className="absolute inset-0 flex items-center justify-center text-slate-400">
-          <p className="text-xl font-medium">Map View</p>
-        </div>
-      </div>
+      <MapView />
 
       {/* Search bar positioned in the top left corner */}
       <div className="absolute left-4 top-4 z-10 w-full max-w-md">
@@ -30,6 +25,5 @@ export default function MapUI() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
