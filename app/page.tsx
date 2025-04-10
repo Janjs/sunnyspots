@@ -13,7 +13,7 @@ const DEFAULT_LOCATION = {
 
 export default function MapUI() {
   const [loadingPercentage, setLoadingPercentage] = useState(0);
-  const mapViewRef = useRef(null);
+  const mapViewRef = useRef<{ addMarker: (coordinates: { lat: number; lng: number }) => void } | null>(null);
 
   const handlePlaceSelect = (place: PlaceSelectData) => {
     console.log(place);
@@ -23,6 +23,8 @@ export default function MapUI() {
         lat: place.geometry.location.lat,
       };
       console.log(coordinates);
+      // Add marker using the ref
+      mapViewRef.current?.addMarker(coordinates);
     }
   };
 

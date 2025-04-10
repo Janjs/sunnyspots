@@ -36,10 +36,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
 
     marker.current = new mapboxgl.Marker().setLngLat([coordinates.lng, coordinates.lat]).addTo(map.current!);
 
-    map.current?.flyTo({
-      center: [coordinates.lng, coordinates.lat],
-      zoom: 17,
-      essential: true,
+    map.current?.panTo([coordinates.lng, coordinates.lat], {
+      duration: 1000,
     });
   };
 
