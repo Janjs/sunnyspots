@@ -77,18 +77,6 @@ export default function MapUI() {
           </Label>
         )}
       </div>
-
-      {/* 3D toggle button */}
-      <div className="absolute bottom-4 right-4 z-10">
-        <Toggle
-          variant="outline"
-          pressed={is3DActive}
-          onPressedChange={handle3DToggle}
-          title={is3DActive ? "Disable 3D view" : "Enable 3D view"}
-        >
-          <Box className="h-5 w-5" />
-        </Toggle>
-      </div>
     </div>
   );
 }

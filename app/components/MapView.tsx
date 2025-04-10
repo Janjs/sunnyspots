@@ -19,7 +19,6 @@ interface MapViewProps {
 interface MapViewRef {
   addMarker: (coordinates: Location) => void;
   setDate: (date: Date) => void;
-  toggle3D: () => void;
 }
 
 const SHADEMAP_API_KEY = process.env.NEXT_PUBLIC_SHADEMAP_API_KEY;
@@ -30,7 +29,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
   const map = useRef<mapboxgl.Map | null>(null);
   const shadeMap = useRef<any>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
-  const is3DActive = useRef(false);
 
   const addMarker = (coordinates: Location) => {
     if (marker.current) {
@@ -50,25 +48,31 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
     }
   };
 
-  const toggle3D = () => {
+  const handleMouseMove = (event: MouseEvent) => {
+    if (event.metaKey) {
+      // Check if cmd key is pressed
+      const pitchChange = event.movementY * 0.1; // Adjust pitch based on vertical mouse movement
+      const newPitch = Math.max(0, Math.min(map.current!.getPitch() - pitchChange, 60));
+      map.current?.setPitch(newPitch);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
+
+  const enable3DBuildings = () => {
     if (!map.current) return;
 
-    is3DActive.current = !is3DActive.current;
+    if (!map.current.getSource("composite")) {
+      console.warn("Composite source not available yet");
+      return;
+    }
 
-    console.log("is3DActive", is3DActive.current);
-
-    if (is3DActive.current) {
-      map.current.setPitch(45);
-      // Add terrain source if it doesn't exist
-      if (!map.current.getSource("mapbox-dem")) {
-        map.current.addSource("mapbox-dem", {
-          type: "raster-dem",
-          url: "mapbox://mapbox.mapbox-terrain-dem-v1",
-          tileSize: 512,
-          maxzoom: 14,
-        });
-      }
-
+    if (!map.current.getLayer("3d-buildings")) {
       map.current.addLayer({
         id: "3d-buildings",
         source: "composite",
@@ -83,16 +87,18 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
           "fill-extrusion-opacity": 0.9,
         },
       });
-    } else {
-      map.current.setPitch(0);
-      map.current.removeLayer("3d-buildings");
     }
   };
+
+  useEffect(() => {
+    if (map.current) {
+      enable3DBuildings();
+    }
+  }, [map.current]);
 
   useImperativeHandle(ref, () => ({
     addMarker,
     setDate,
-    toggle3D,
   }));
 
   useEffect(() => {
@@ -122,7 +128,10 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
     };
 
     // Add shadow simulator after map loads
-    map.current.on("load", () => {
+    map.current.on("load", async () => {
+      // Ensure map is fully loaded before initializing ShadeMap
+      await mapLoaded(map.current!);
+
       shadeMap.current = new ShadeMap({
         apiKey: SHADEMAP_API_KEY!,
         date: initialDate,
@@ -137,17 +146,21 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
           _overzoom: 18,
         },
         getFeatures: async () => {
-          await mapLoaded(map.current!);
-          const buildingData = map
-            .current!.querySourceFeatures("composite", { sourceLayer: "building" })
-            .filter((feature: any) => {
-              return (
-                feature.properties &&
-                feature.properties.underground !== "true" &&
-                (feature.properties.height || feature.properties.render_height)
-              );
-            });
-          return buildingData;
+          try {
+            const buildingData = map
+              .current!.querySourceFeatures("composite", { sourceLayer: "building" })
+              .filter((feature: any) => {
+                return (
+                  feature.properties &&
+                  feature.properties.underground !== "true" &&
+                  (feature.properties.height || feature.properties.render_height)
+                );
+              });
+            return buildingData;
+          } catch (error) {
+            console.error("Error getting features:", error);
+            return [];
+          }
         },
         debug: (msg: string) => {
           console.log(new Date().toISOString(), msg);
