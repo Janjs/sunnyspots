@@ -55,9 +55,10 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
 
     is3DActive.current = !is3DActive.current;
 
+    console.log("is3DActive", is3DActive.current);
+
     if (is3DActive.current) {
       map.current.setPitch(45);
-
       // Add terrain source if it doesn't exist
       if (!map.current.getSource("mapbox-dem")) {
         map.current.addSource("mapbox-dem", {
@@ -84,7 +85,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
       });
     } else {
       map.current.setPitch(0);
-      map.current.setTerrain(null);
+      map.current.removeLayer("3d-buildings");
     }
   };
 

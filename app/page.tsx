@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import PlacesAutocomplete, { PlaceSelectData } from "@/app/components/PlacesAutocomplete";
 import { DateTimePicker } from "@/app/components/DateTimePicker";
 import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
 import { Box } from "lucide-react";
 import SunCalc from "suncalc";
 import { cn } from "@/lib/utils";
@@ -79,18 +80,14 @@ export default function MapUI() {
 
       {/* 3D toggle button */}
       <div className="absolute bottom-4 right-4 z-10">
-        <Button
+        <Toggle
           variant="outline"
-          size="icon"
-          className={cn(
-            "h-10 w-10 rounded-full shadow-md transition-colors duration-200",
-            is3DActive ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-white hover:bg-accent"
-          )}
-          onClick={handle3DToggle}
+          pressed={is3DActive}
+          onPressedChange={handle3DToggle}
           title={is3DActive ? "Disable 3D view" : "Enable 3D view"}
         >
-          <Box className="h-5 w-5" color={is3DActive ? "white" : "black"} />
-        </Button>
+          <Box className="h-5 w-5" />
+        </Toggle>
       </div>
     </div>
   );
