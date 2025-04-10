@@ -17,7 +17,7 @@ interface MapViewProps {
 }
 
 interface MapViewRef {
-  addMarker: (coordinates: Location) => void;
+  addMarker: (coordinates: Location, outdoorSeating: boolean) => void;
   setDate: (date: Date) => void;
 }
 
@@ -30,12 +30,16 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
   const shadeMap = useRef<any>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
 
-  const addMarker = (coordinates: Location) => {
+  const addMarker = (coordinates: Location, outdoorSeating: boolean) => {
     if (marker.current) {
       marker.current.remove();
     }
 
-    marker.current = new mapboxgl.Marker().setLngLat([coordinates.lng, coordinates.lat]).addTo(map.current!);
+    const markerColor = outdoorSeating ? "#00FF00" : "#FF0000"; // Green if outdoorSeating, red otherwise
+
+    marker.current = new mapboxgl.Marker({ color: markerColor })
+      .setLngLat([coordinates.lng, coordinates.lat])
+      .addTo(map.current!);
 
     map.current?.panTo([coordinates.lng, coordinates.lat], {
       duration: 1000,
@@ -63,38 +67,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
       window.removeEventListener("mousemove", handleMouseMove);
     };
   }, []);
-
-  const enable3DBuildings = () => {
-    if (!map.current) return;
-
-    if (!map.current.getSource("composite")) {
-      console.warn("Composite source not available yet");
-      return;
-    }
-
-    if (!map.current.getLayer("3d-buildings")) {
-      map.current.addLayer({
-        id: "3d-buildings",
-        source: "composite",
-        "source-layer": "building",
-        filter: ["==", "extrude", "true"],
-        type: "fill-extrusion",
-        minzoom: 15,
-        paint: {
-          "fill-extrusion-color": "#aaa",
-          "fill-extrusion-height": ["get", "height"],
-          "fill-extrusion-base": ["get", "min_height"],
-          "fill-extrusion-opacity": 0.9,
-        },
-      });
-    }
-  };
-
-  useEffect(() => {
-    if (map.current) {
-      enable3DBuildings();
-    }
-  }, [map.current]);
 
   useImperativeHandle(ref, () => ({
     addMarker,
@@ -131,6 +103,24 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
     map.current.on("load", async () => {
       // Ensure map is fully loaded before initializing ShadeMap
       await mapLoaded(map.current!);
+
+      map.current!.addLayer({
+        id: "3d-buildings",
+        source: "composite",
+        "source-layer": "building",
+        filter: ["==", "extrude", "true"],
+        type: "fill-extrusion",
+        minzoom: 15,
+        paint: {
+          "fill-extrusion-color": "#aaa",
+          "fill-extrusion-height": ["get", "height"],
+          "fill-extrusion-base": ["get", "min_height"],
+          "fill-extrusion-opacity": 0.9,
+        },
+      });
+
+      // Add zoom and rotation controls to the map in the bottom right corner
+      map.current!.addControl(new mapboxgl.NavigationControl(), "bottom-right");
 
       shadeMap.current = new ShadeMap({
         apiKey: SHADEMAP_API_KEY!,

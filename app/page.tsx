@@ -5,11 +5,7 @@ import MapView from "@/app/components/MapView";
 import { Label } from "@/components/ui/label";
 import PlacesAutocomplete, { PlaceSelectData } from "@/app/components/PlacesAutocomplete";
 import { DateTimePicker } from "@/app/components/DateTimePicker";
-import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
-import { Box } from "lucide-react";
 import SunCalc from "suncalc";
-import { cn } from "@/lib/utils";
 
 const DEFAULT_LOCATION = {
   lat: 52.09178,
@@ -25,7 +21,7 @@ export default function MapUI() {
     return new Date(times.sunrise.getTime() + 60 * 60 * 1000); // 1 hour after sunrise
   });
   const mapViewRef = useRef<{
-    addMarker: (coordinates: { lat: number; lng: number }) => void;
+    addMarker: (coordinates: { lat: number; lng: number }, outdoorSeating: boolean) => void;
     setDate: (date: Date) => void;
     toggle3D: () => void;
   } | null>(null);
@@ -36,9 +32,8 @@ export default function MapUI() {
         lng: place.geometry.location.lng,
         lat: place.geometry.location.lat,
       };
-      console.log(coordinates);
       // Add marker using the ref
-      mapViewRef.current?.addMarker(coordinates);
+      mapViewRef.current?.addMarker(coordinates, place.outdoorSeating);
     }
   };
 

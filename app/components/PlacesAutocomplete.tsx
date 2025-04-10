@@ -29,6 +29,7 @@ export interface PlaceSelectData {
     location: Location;
   };
   formatted_address: string;
+  outdoorSeating: boolean;
 }
 
 interface PlacesAutocompleteProps {
@@ -94,7 +95,7 @@ export default function PlacesAutocomplete({ onPlaceSelect, defaultLocation }: P
   const handleSelect = async (place: Place) => {
     try {
       // Fetch detailed place information using Place Details API
-      const detailsUrl = `https://places.googleapis.com/v1/places/${place.placeId}?fields=location,formattedAddress`;
+      const detailsUrl = `https://places.googleapis.com/v1/places/${place.placeId}?fields=location,formattedAddress,outdoorSeating`;
       const response = await fetch(detailsUrl, {
         method: "GET",
         headers: {
@@ -102,7 +103,6 @@ export default function PlacesAutocomplete({ onPlaceSelect, defaultLocation }: P
           "Content-Type": "application/json",
         },
       });
-
       const placeDetails = await response.json();
       console.log("placeDetails", placeDetails);
       onPlaceSelect({
@@ -114,6 +114,7 @@ export default function PlacesAutocomplete({ onPlaceSelect, defaultLocation }: P
           },
         },
         formatted_address: placeDetails.formattedAddress,
+        outdoorSeating: placeDetails.outdoorSeating,
       } as PlaceSelectData);
     } catch (error) {
       console.error("Error fetching place details:", error);
