@@ -9,9 +9,9 @@ import SunCalc from "suncalc";
 const SHADEMAP_API_KEY = process.env.NEXT_PUBLIC_SHADEMAP_API_KEY;
 const MAPBOX_API_KEY = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-const INITIAL_COORDINATES = { lat: 52.095, lng: 5.127 };
+const INITIAL_COORDINATES = { lat: 52.09178, lng: 5.1205 };
 
-export default function MapView() {
+export default function MapView({ onLoadingProgress }) {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const shadeMap = useRef(null);
@@ -25,7 +25,8 @@ export default function MapView() {
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v11",
       center: { lat: INITIAL_COORDINATES.lat, lng: INITIAL_COORDINATES.lng },
-      zoom: 8,
+      zoom: 15,
+      minZoom: 15,
       hash: true,
     });
 
@@ -51,7 +52,7 @@ export default function MapView() {
         apiKey: SHADEMAP_API_KEY,
         date: now,
         color: "#01112f",
-        opacity: 0.7,
+        opacity: 0.6,
         terrainSource: {
           maxZoom: 15,
           tileSize: 256,
@@ -78,7 +79,8 @@ export default function MapView() {
       }).addTo(map.current);
 
       shadeMap.current.on("tileloaded", (loadedTiles, totalTiles) => {
-        console.log(`Loading: ${((loadedTiles / totalTiles) * 100).toFixed(0)}%`);
+        const percentage = Math.round((loadedTiles / totalTiles) * 100);
+        onLoadingProgress(percentage);
       });
     });
 
@@ -93,7 +95,7 @@ export default function MapView() {
         map.current = null;
       }
     };
-  }, []);
+  }, [onLoadingProgress]);
 
   return <div ref={mapContainer} style={{ width: "100%", height: "100vh" }} />;
 }
