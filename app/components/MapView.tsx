@@ -19,6 +19,7 @@ interface MapViewProps {
 interface MapViewRef {
   addMarker: (coordinates: Location) => void;
   setDate: (date: Date) => void;
+  toggle3D: () => void;
 }
 
 const SHADEMAP_API_KEY = process.env.NEXT_PUBLIC_SHADEMAP_API_KEY;
@@ -29,6 +30,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
   const map = useRef<mapboxgl.Map | null>(null);
   const shadeMap = useRef<any>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
+  const is3DActive = useRef(false);
 
   const addMarker = (coordinates: Location) => {
     if (marker.current) {
@@ -48,9 +50,48 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
     }
   };
 
+  const toggle3D = () => {
+    if (!map.current) return;
+
+    is3DActive.current = !is3DActive.current;
+
+    if (is3DActive.current) {
+      map.current.setPitch(45);
+
+      // Add terrain source if it doesn't exist
+      if (!map.current.getSource("mapbox-dem")) {
+        map.current.addSource("mapbox-dem", {
+          type: "raster-dem",
+          url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+          tileSize: 512,
+          maxzoom: 14,
+        });
+      }
+
+      map.current.addLayer({
+        id: "3d-buildings",
+        source: "composite",
+        "source-layer": "building",
+        filter: ["==", "extrude", "true"],
+        type: "fill-extrusion",
+        minzoom: 15,
+        paint: {
+          "fill-extrusion-color": "#aaa",
+          "fill-extrusion-height": ["get", "height"],
+          "fill-extrusion-base": ["get", "min_height"],
+          "fill-extrusion-opacity": 0.9,
+        },
+      });
+    } else {
+      map.current.setPitch(0);
+      map.current.setTerrain(null);
+    }
+  };
+
   useImperativeHandle(ref, () => ({
     addMarker,
     setDate,
+    toggle3D,
   }));
 
   useEffect(() => {

@@ -5,7 +5,10 @@ import MapView from "@/app/components/MapView";
 import { Label } from "@/components/ui/label";
 import PlacesAutocomplete, { PlaceSelectData } from "@/app/components/PlacesAutocomplete";
 import { DateTimePicker } from "@/app/components/DateTimePicker";
+import { Button } from "@/components/ui/button";
+import { Box } from "lucide-react";
 import SunCalc from "suncalc";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_LOCATION = {
   lat: 52.09178,
@@ -14,6 +17,7 @@ const DEFAULT_LOCATION = {
 
 export default function MapUI() {
   const [loadingPercentage, setLoadingPercentage] = useState(0);
+  const [is3DActive, setIs3DActive] = useState(false);
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date();
     const times = SunCalc.getTimes(now, DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng);
@@ -22,6 +26,7 @@ export default function MapUI() {
   const mapViewRef = useRef<{
     addMarker: (coordinates: { lat: number; lng: number }) => void;
     setDate: (date: Date) => void;
+    toggle3D: () => void;
   } | null>(null);
 
   const handlePlaceSelect = (place: PlaceSelectData) => {
@@ -39,6 +44,11 @@ export default function MapUI() {
   const handleDateChange = (date: Date) => {
     setCurrentDate(date);
     mapViewRef.current?.setDate(date);
+  };
+
+  const handle3DToggle = () => {
+    setIs3DActive(!is3DActive);
+    mapViewRef.current?.toggle3D();
   };
 
   return (
@@ -65,6 +75,22 @@ export default function MapUI() {
             Loading: {loadingPercentage}%
           </Label>
         )}
+      </div>
+
+      {/* 3D toggle button */}
+      <div className="absolute bottom-4 right-4 z-10">
+        <Button
+          variant="outline"
+          size="icon"
+          className={cn(
+            "h-10 w-10 rounded-full shadow-md transition-colors duration-200",
+            is3DActive ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-white hover:bg-accent"
+          )}
+          onClick={handle3DToggle}
+          title={is3DActive ? "Disable 3D view" : "Enable 3D view"}
+        >
+          <Box className="h-5 w-5" color={is3DActive ? "white" : "black"} />
+        </Button>
       </div>
     </div>
   );
