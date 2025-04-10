@@ -65,6 +65,7 @@ const searchPlaces = async (query: string, location: Location) => {
     .then((data) => data.suggestions || []); // Add fallback empty array
 };
 
+// TODO: Add debounce and all that
 export default function PlacesAutocomplete({ onPlaceSelect, defaultLocation }: PlacesAutocompleteProps) {
   const [value, setValue] = useState("");
   const [places, setPlaces] = useState<Place[]>([]);

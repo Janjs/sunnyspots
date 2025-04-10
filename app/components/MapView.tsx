@@ -4,7 +4,6 @@ import { useEffect, useRef, forwardRef, useImperativeHandle, Dispatch, SetStateA
 import mapboxgl from "mapbox-gl";
 import ShadeMap from "mapbox-gl-shadow-simulator";
 import "mapbox-gl/dist/mapbox-gl.css";
-import SunCalc from "suncalc";
 
 interface Location {
   lat: number;
@@ -14,16 +13,18 @@ interface Location {
 interface MapViewProps {
   onLoadingProgress: Dispatch<SetStateAction<number>>;
   defaultLocation: Location;
+  initialDate: Date;
 }
 
 interface MapViewRef {
   addMarker: (coordinates: Location) => void;
+  setDate: (date: Date) => void;
 }
 
 const SHADEMAP_API_KEY = process.env.NEXT_PUBLIC_SHADEMAP_API_KEY;
 const MAPBOX_API_KEY = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
-const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defaultLocation }, ref) => {
+const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defaultLocation, initialDate }, ref) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const shadeMap = useRef<any>(null);
@@ -41,8 +42,15 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
     });
   };
 
+  const setDate = (date: Date) => {
+    if (shadeMap.current) {
+      shadeMap.current.setDate(date);
+    }
+  };
+
   useImperativeHandle(ref, () => ({
     addMarker,
+    setDate,
   }));
 
   useEffect(() => {
@@ -71,15 +79,11 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
       });
     };
 
-    let now = new Date(
-      SunCalc.getTimes(new Date(), defaultLocation.lat, defaultLocation.lng).sunrise.getTime() + 60 * 60 * 1000
-    );
-
     // Add shadow simulator after map loads
     map.current.on("load", () => {
       shadeMap.current = new ShadeMap({
         apiKey: SHADEMAP_API_KEY!,
-        date: now,
+        date: initialDate,
         color: "#01112f",
         opacity: 0.6,
         terrainSource: {
@@ -125,7 +129,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
         map.current = null;
       }
     };
-  }, [onLoadingProgress, defaultLocation]);
+  }, [onLoadingProgress, defaultLocation, initialDate]);
 
   return <div ref={mapContainer} style={{ width: "100%", height: "100vh" }} />;
 });
