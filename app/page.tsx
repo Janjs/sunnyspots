@@ -4,7 +4,7 @@ import { useRef } from "react";
 import MapView from "@/app/components/MapView";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
-import PlacesAutocomplete from "@/app/components/PlacesAutocomplete";
+import PlacesAutocomplete, { PlaceSelectData } from "@/app/components/PlacesAutocomplete";
 
 const DEFAULT_LOCATION = {
   lat: 52.09178,
@@ -15,13 +15,14 @@ export default function MapUI() {
   const [loadingPercentage, setLoadingPercentage] = useState(0);
   const mapViewRef = useRef(null);
 
-  const handlePlaceSelect = (place) => {
+  const handlePlaceSelect = (place: PlaceSelectData) => {
+    console.log(place);
     if (place.geometry?.location) {
       const coordinates = {
-        lng: place.geometry.location.lng(),
-        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng,
+        lat: place.geometry.location.lat,
       };
-      mapViewRef.current?.addMarker(coordinates);
+      console.log(coordinates);
     }
   };
 
