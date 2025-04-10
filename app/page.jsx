@@ -1,28 +1,37 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useRef } from "react";
 import MapView from "@/app/components/MapView";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import PlacesAutocomplete from "@/app/components/PlacesAutocomplete";
+
+const DEFAULT_LOCATION = {
+  lat: 52.09178,
+  lng: 5.1205,
+};
 
 export default function MapUI() {
   const [loadingPercentage, setLoadingPercentage] = useState(0);
+  const mapViewRef = useRef(null);
+
+  const handlePlaceSelect = (place) => {
+    if (place.geometry?.location) {
+      const coordinates = {
+        lng: place.geometry.location.lng(),
+        lat: place.geometry.location.lat(),
+      };
+      mapViewRef.current?.addMarker(coordinates);
+    }
+  };
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      <MapView onLoadingProgress={setLoadingPercentage} />
+      <MapView ref={mapViewRef} onLoadingProgress={setLoadingPercentage} defaultLocation={DEFAULT_LOCATION} />
 
       {/* Search bar positioned in the top left corner */}
       <div className="absolute left-4 top-4 z-10 w-full max-w-md">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Input type="text" placeholder="Search bars and restaurants in Utrecht..." />
-          </div>
-          <Button variant="default" size="sm">
-            Search
-          </Button>
-        </div>
+        <PlacesAutocomplete onPlaceSelect={handlePlaceSelect} defaultLocation={DEFAULT_LOCATION} />
       </div>
 
       {/* Loading percentage indicator */}

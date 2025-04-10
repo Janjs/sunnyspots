@@ -1,17 +1,13 @@
-import type { Metadata } from "next";
 import "./globals.css";
+import Script from "next/script";
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "Terras Map",
   description: "A map to know when restaurants and bars get sunlight.",
   generator: "v0.dev",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head></head>

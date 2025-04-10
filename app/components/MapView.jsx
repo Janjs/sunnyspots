@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import mapboxgl from "mapbox-gl";
 import ShadeMap from "mapbox-gl-shadow-simulator";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -8,13 +8,29 @@ import SunCalc from "suncalc";
 
 const SHADEMAP_API_KEY = process.env.NEXT_PUBLIC_SHADEMAP_API_KEY;
 const MAPBOX_API_KEY = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-
-const INITIAL_COORDINATES = { lat: 52.09178, lng: 5.1205 };
-
-export default function MapView({ onLoadingProgress }) {
+const MapView = forwardRef(({ onLoadingProgress, defaultLocation }, ref) => {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const shadeMap = useRef(null);
+  const marker = useRef(null);
+
+  const addMarker = (coordinates) => {
+    if (marker.current) {
+      marker.current.remove();
+    }
+
+    marker.current = new mapboxgl.Marker().setLngLat([coordinates.lng, coordinates.lat]).addTo(map.current);
+
+    map.current.flyTo({
+      center: [coordinates.lng, coordinates.lat],
+      zoom: 17,
+      essential: true,
+    });
+  };
+
+  useImperativeHandle(ref, () => ({
+    addMarker,
+  }));
 
   useEffect(() => {
     if (map.current) return; // Initialize map only once
@@ -24,7 +40,7 @@ export default function MapView({ onLoadingProgress }) {
       accessToken: MAPBOX_API_KEY,
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/streets-v11",
-      center: { lat: INITIAL_COORDINATES.lat, lng: INITIAL_COORDINATES.lng },
+      center: { lat: defaultLocation.lat, lng: defaultLocation.lng },
       zoom: 15,
       minZoom: 15,
       hash: true,
@@ -43,7 +59,7 @@ export default function MapView({ onLoadingProgress }) {
     };
 
     let now = new Date(
-      SunCalc.getTimes(new Date(), INITIAL_COORDINATES.lat, INITIAL_COORDINATES.lng).sunrise.getTime() + 60 * 60 * 1000
+      SunCalc.getTimes(new Date(), defaultLocation.lat, defaultLocation.lng).sunrise.getTime() + 60 * 60 * 1000
     );
 
     // Add shadow simulator after map loads
@@ -98,4 +114,8 @@ export default function MapView({ onLoadingProgress }) {
   }, [onLoadingProgress]);
 
   return <div ref={mapContainer} style={{ width: "100%", height: "100vh" }} />;
-}
+});
+
+MapView.displayName = "MapView";
+
+export default MapView;
