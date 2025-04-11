@@ -14,7 +14,6 @@ const DEFAULT_LOCATION = {
 
 export default function MapUI() {
   const [loadingPercentage, setLoadingPercentage] = useState(0);
-  const [is3DActive, setIs3DActive] = useState(false);
   const [currentDate, setCurrentDate] = useState(() => {
     const now = new Date();
     const times = SunCalc.getTimes(now, DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lng);
@@ -23,7 +22,6 @@ export default function MapUI() {
   const mapViewRef = useRef<{
     addMarker: (coordinates: { lat: number; lng: number }, outdoorSeating: boolean) => void;
     setDate: (date: Date) => void;
-    toggle3D: () => void;
   } | null>(null);
 
   const handlePlaceSelect = (place: PlaceSelectData) => {
@@ -40,11 +38,6 @@ export default function MapUI() {
   const handleDateChange = (date: Date) => {
     setCurrentDate(date);
     mapViewRef.current?.setDate(date);
-  };
-
-  const handle3DToggle = () => {
-    setIs3DActive(!is3DActive);
-    mapViewRef.current?.toggle3D();
   };
 
   return (

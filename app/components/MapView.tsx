@@ -85,6 +85,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
       zoom: 15,
       minZoom: 15,
       hash: true,
+      pitch: 45,
     });
 
     const mapLoaded = (map: mapboxgl.Map) => {
@@ -115,7 +116,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(({ onLoadingProgress, defau
           "fill-extrusion-color": "#aaa",
           "fill-extrusion-height": ["get", "height"],
           "fill-extrusion-base": ["get", "min_height"],
-          "fill-extrusion-opacity": 0.9,
+          "fill-extrusion-opacity": 1,
         },
       });
 
