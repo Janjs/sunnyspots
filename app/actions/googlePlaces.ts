@@ -3,8 +3,8 @@
 import { Place, PlaceSelectData } from "../components/PlacesAutocomplete"
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY
-// const placesApiUrl = "https://places.googleapis.com/v1/places"
-const placesApiUrl = "http://localhost:3010/places"
+const placesApiUrl = "https://places.googleapis.com/v1/places"
+// const placesApiUrl = "http://localhost:3010/places"
 
 export async function fetchPlaceSuggestions(
   query: string,
