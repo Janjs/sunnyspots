@@ -54,7 +54,6 @@ export async function fetchPlaceDetails(
   })
 
   const placeDetails = await response.json()
-  console.log("placeDetails", placeDetails)
   const placeSelectData: PlaceSelectData = {
     name: placeDetails.name,
     geometry: {
@@ -67,4 +66,90 @@ export async function fetchPlaceDetails(
     outdoorSeating: placeDetails.outdoorSeating,
   }
   return placeSelectData
+}
+
+interface NearbySearchParams {
+  location: { lat: number; lng: number }
+  type?: string
+  keyword?: string
+  radius?: number
+}
+
+export interface PlaceResult {
+  place_id: string
+  name: string
+  rating?: number
+  vicinity: string
+  geometry: {
+    location: {
+      lat: number
+      lng: number
+    }
+  }
+  photos?: {
+    photo_reference: string
+    height: number
+    width: number
+    html_attributions: string[]
+  }[]
+  opening_hours?: {
+    open_now: boolean
+  }
+  price_level?: number
+  user_ratings_total?: number
+  business_status?: string
+}
+
+export async function searchTopOutdoorPlaces({
+  location,
+  type = "restaurant",
+  keyword = "outdoor seating",
+  radius = 1500,
+}: NearbySearchParams): Promise<PlaceResult[]> {
+  const baseUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+
+  const params = new URLSearchParams({
+    location: `${location.lat},${location.lng}`,
+    radius: radius.toString(),
+    type,
+    keyword,
+    key: GOOGLE_API_KEY as string,
+  })
+  console.log(`${baseUrl}?${params}`)
+  try {
+    const response = await fetch(`${baseUrl}?${params}`)
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch nearby places: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+      throw new Error(
+        `Places API Error: ${data.status} ${data.error_message || ""}`
+      )
+    }
+
+    return (data.results || []).map((place: any) => ({
+      place_id: place.place_id,
+      name: place.name,
+      rating: place.rating,
+      vicinity: place.vicinity,
+      geometry: {
+        location: {
+          lat: place.geometry.location.lat,
+          lng: place.geometry.location.lng,
+        },
+      },
+      photos: place.photos,
+      opening_hours: place.opening_hours,
+      price_level: place.price_level,
+      user_ratings_total: place.user_ratings_total,
+      business_status: place.business_status,
+    }))
+  } catch (error) {
+    console.error("Error fetching nearby places:", error)
+    throw error
+  }
 }
