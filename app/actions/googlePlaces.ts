@@ -4,7 +4,10 @@ import { Place, PlaceSelectData } from "../components/PlacesAutocomplete"
 
 const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY
 const placesApiUrl = "https://places.googleapis.com/v1/places"
-// const placesApiUrl = "http://localhost:3010/places"
+const mapsApiUrl =
+  "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+const mockedPlacesApiUrl = "http://localhost:3010/places"
+const mockedMapsApiUrl = "http://localhost:3020/places"
 
 export async function fetchPlaceSuggestions(
   query: string,
@@ -25,7 +28,7 @@ export async function fetchPlaceSuggestions(
     includedPrimaryTypes: ["restaurant", "bar"],
   }
 
-  const response = await fetch(`${placesApiUrl}:autocomplete`, {
+  const response = await fetch(`${mockedPlacesApiUrl}:autocomplete`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -44,7 +47,7 @@ export async function fetchPlaceSuggestions(
 export async function fetchPlaceDetails(
   placeId: string
 ): Promise<PlaceSelectData> {
-  const detailsUrl = `${placesApiUrl}/${placeId}?fields=location,formattedAddress,outdoorSeating`
+  const detailsUrl = `${mockedPlacesApiUrl}/${placeId}?fields=location,formattedAddress,outdoorSeating`
   const response = await fetch(detailsUrl, {
     method: "GET",
     headers: {
@@ -106,8 +109,6 @@ export async function searchTopOutdoorPlaces({
   keyword = "outdoor seating",
   radius = 1500,
 }: NearbySearchParams): Promise<PlaceResult[]> {
-  const baseUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-
   const params = new URLSearchParams({
     location: `${location.lat},${location.lng}`,
     radius: radius.toString(),
@@ -115,9 +116,9 @@ export async function searchTopOutdoorPlaces({
     keyword,
     key: GOOGLE_API_KEY as string,
   })
-  console.log(`${baseUrl}?${params}`)
+
   try {
-    const response = await fetch(`${baseUrl}?${params}`)
+    const response = await fetch(`${mockedMapsApiUrl}/nearbysearch?${params}`)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch nearby places: ${response.statusText}`)

@@ -1,0 +1,88 @@
+{
+  "typescript": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "javascript": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "format": {
+    "indentSize": 2,
+    "tabSize": 2,
+    "insertSpaces": true,
+    "trimTrailingWhitespace": true,
+    "insertFinalNewline": true,
+    "trimFinalNewlines": true
+  },
+  "files": {
+    "associations": {
+      "*.tsx": "typescriptreact",
+      "*.ts": "typescript",
+      "*.jsx": "javascriptreact",
+      "*.js": "javascript"
+    },
+    "exclude": [
+      "**/.git/**",
+      "**/node_modules/**",
+      "**/.next/**",
+      "**/out/**",
+      "**/dist/**",
+      "**/build/**"
+    ]
+  },
+  "editor": {
+    "formatOnSave": true,
+    "formatOnPaste": true,
+    "formatOnType": true,
+    "suggestOnTriggerCharacters": true,
+    "acceptSuggestionOnEnter": "on",
+    "quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    },
+    "wordBasedSuggestions": true,
+    "suggestSelection": "first",
+    "tabCompletion": "on",
+    "bracketPairColorization": {
+      "enabled": true
+    }
+  },
+  "search": {
+    "exclude": {
+      "**/node_modules": true,
+      "**/bower_components": true,
+      "**/*.code-search": true,
+      "**/.next": true,
+      "**/dist": true,
+      "**/build": true
+    }
+  }
+}
