@@ -87,13 +87,27 @@ export default function TopRatedPlaces({
           keyword: "outdoor seating",
         })
 
+        // Map the results without depending on current places state
         const topPlaces = results.slice(0, 5).map((place) => ({
           ...place,
           isLoadingPhoto: false,
           photoDataUrl: undefined,
         }))
 
-        setPlaces(topPlaces)
+        // Use the setter function form to access current places state
+        setPlaces((currentPlaces) => {
+          return topPlaces.map((place) => {
+            const existingPlace = currentPlaces.find(
+              (p) => p.place_id === place.place_id
+            )
+            return {
+              ...place,
+              photoDataUrl: existingPlace?.photoDataUrl,
+              isLoadingPhoto: false,
+            }
+          })
+        })
+
         onPlacesLoaded?.(topPlaces)
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred")
