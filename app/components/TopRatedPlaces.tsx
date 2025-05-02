@@ -161,33 +161,35 @@ export default function TopRatedPlaces({
           {places.map((place) => (
             <Card
               key={place.place_id}
-              className="overflow-hidden relative group cursor-pointer transition-all hover:ring-1 hover:shadow-md h-64"
+              className="overflow-hidden relative group cursor-pointer transition-all hover:ring-1 hover:shadow-md from-blue-500 h-64"
               onClick={() => handlePlaceClick(place)}
             >
-              {place.photoDataUrl && (
-                <div className="absolute inset-0 z-0">
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/80 to-background" />
-                  <img
-                    src={place.photoDataUrl}
-                    alt={place.name}
-                    className="object-cover w-full h-full opacity-60 group-hover:opacity-70 transition-opacity"
-                  />
-                </div>
-              )}
+              <div className="absolute inset-0 z-0 ">
+                {place.photoDataUrl && (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500 via-blue-500/50 to-transparent" />
+                    <img
+                      src={place.photoDataUrl}
+                      alt={place.name}
+                      className="object-cover w-full h-full opacity-100 group-hover:shadow-lg transition-opacity"
+                    />
+                  </>
+                )}
+              </div>
               <div className="relative z-10 flex flex-col h-full">
                 <CardHeader className="p-3 flex-1">
                   <div className="flex flex-col h-full justify-between">
                     <div></div>
                     <div className="flex justify-between items-end w-full">
                       <div>
-                        <CardTitle className="text-base font-bold transition-colors">
+                        <CardTitle className="text-base font-bold text-white transition-colors">
                           {place.name}
                         </CardTitle>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-blue-100 mt-0.5">
                           {place.vicinity}
                         </p>
                       </div>
-                      <Sun className="h-4 w-4 text-primary" />
+                      <Sun className="h-4 w-4 text-yellow-300" />
                     </div>
                   </div>
                 </CardHeader>
