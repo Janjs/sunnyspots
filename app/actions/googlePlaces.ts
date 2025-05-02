@@ -7,10 +7,17 @@ const placesApiUrl = "https://places.googleapis.com/v1/places"
 const mapsApiUrl =
   "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
+// Cache durations in seconds
+const ONE_DAY_IN_SECONDS = 86400
+
+// Helper to determine if response was likely cached based on timing
+const wasResponseCached = (responseTime: number) => responseTime < 20 // If response took less than 20ms, it was likely cached
+
 export async function fetchPlaceSuggestions(
   query: string,
   location: { lat: number; lng: number }
 ): Promise<Place[]> {
+  const startTime = Date.now()
   const body = {
     input: query,
     locationBias: {
@@ -25,7 +32,9 @@ export async function fetchPlaceSuggestions(
     includedRegionCodes: ["nl"],
     includedPrimaryTypes: ["restaurant", "bar"],
   }
-
+  console.log(
+    `[Places API] Fetching suggestions for query: "${query}" at location: ${location.lat},${location.lng}`
+  )
   const response = await fetch(`${placesApiUrl}:autocomplete`, {
     method: "POST",
     headers: {
@@ -33,10 +42,17 @@ export async function fetchPlaceSuggestions(
       "X-Goog-Api-Key": GOOGLE_API_KEY as string,
     },
     body: JSON.stringify(body),
+    next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
   })
+  const endTime = Date.now()
+  const responseTime = endTime - startTime
+  console.log(
+    `[Places API] Suggestions request completed in ${responseTime}ms (${
+      wasResponseCached(responseTime) ? "CACHE HIT" : "CACHE MISS"
+    })`
+  )
 
   const data = await response.json()
-  console.log("data", data)
   return data.suggestions
     ? (data.suggestions.map((p: any) => p.placePrediction) as Place[])
     : []
@@ -45,6 +61,8 @@ export async function fetchPlaceSuggestions(
 export async function fetchPlaceDetails(
   placeId: string
 ): Promise<PlaceSelectData> {
+  const startTime = Date.now()
+  console.log(`[Places API] Fetching details for place: ${placeId}`)
   const detailsUrl = `${placesApiUrl}/${placeId}?fields=location,formattedAddress,outdoorSeating`
   const response = await fetch(detailsUrl, {
     method: "GET",
@@ -52,7 +70,15 @@ export async function fetchPlaceDetails(
       "X-Goog-Api-Key": GOOGLE_API_KEY as string,
       "Content-Type": "application/json",
     },
+    next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
   })
+  const endTime = Date.now()
+  const responseTime = endTime - startTime
+  console.log(
+    `[Places API] Details request completed in ${responseTime}ms (${
+      wasResponseCached(responseTime) ? "CACHE HIT" : "CACHE MISS"
+    })`
+  )
 
   const placeDetails = await response.json()
   const placeSelectData: PlaceSelectData = {
@@ -107,6 +133,7 @@ export async function searchTopOutdoorPlaces({
   keyword = "outdoor seating",
   radius = 1500,
 }: NearbySearchParams): Promise<PlaceResult[]> {
+  const startTime = Date.now()
   const params = new URLSearchParams({
     location: `${location.lat},${location.lng}`,
     radius: radius.toString(),
@@ -114,9 +141,20 @@ export async function searchTopOutdoorPlaces({
     keyword,
     key: GOOGLE_API_KEY as string,
   })
-
+  console.log(
+    `[Places API] Searching nearby places at location: ${location.lat},${location.lng} with type: ${type}, keyword: ${keyword}`
+  )
   try {
-    const response = await fetch(`${mapsApiUrl}?${params}`)
+    const response = await fetch(`${mapsApiUrl}?${params}`, {
+      next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+    })
+    const endTime = Date.now()
+    const responseTime = endTime - startTime
+    console.log(
+      `[Places API] Nearby search completed in ${responseTime}ms (${
+        wasResponseCached(responseTime) ? "CACHE HIT" : "CACHE MISS"
+      })`
+    )
 
     if (!response.ok) {
       throw new Error(`Failed to fetch nearby places: ${response.statusText}`)

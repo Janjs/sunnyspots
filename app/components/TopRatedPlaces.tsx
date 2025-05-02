@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Star } from "lucide-react"
+import { Star, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { searchTopOutdoorPlaces } from "@/app/actions/googlePlaces"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
+import Image from "next/image"
 
 interface TopRatedPlacesProps {
   location: { lat: number; lng: number }
@@ -71,28 +72,45 @@ export default function TopRatedPlaces({
         <p className="text-sm text-muted-foreground">No places found nearby</p>
       ) : (
         places.map((place) => (
-          <Card key={place.place_id} className="overflow-hidden">
-            <CardHeader className="p-3 pb-2">
-              <CardTitle className="text-sm font-medium flex justify-between">
-                <span className="truncate">{place.name}</span>
-                <span className="flex items-center text-amber-500">
-                  {place.rating} <Star className="ml-1 h-3 w-3 fill-current" />
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 pt-0">
-              <p className="text-xs text-muted-foreground mb-2 truncate">
-                {place.vicinity}
-              </p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => handlePlaceClick(place)}
-              >
-                Add to Map
-              </Button>
-            </CardContent>
+          <Card key={place.place_id} className="overflow-hidden relative group">
+            {place.photos && place.photos[0] && (
+              <div className="absolute inset-0 z-0">
+                <Image
+                  src={""}
+                  alt={place.name}
+                  fill
+                  className="object-cover opacity-20 group-hover:opacity-30 transition-opacity"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              </div>
+            )}
+            <div className="relative z-10">
+              <CardHeader className="p-3 pb-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-base font-medium">
+                      {place.name}
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {place.vicinity}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Sun className="h-4 w-4 text-amber-500" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs bg-background/80 backdrop-blur-sm hover:bg-background/90"
+                  onClick={() => handlePlaceClick(place)}
+                >
+                  Add to Map
+                </Button>
+              </CardContent>
+            </div>
           </Card>
         ))
       )}
