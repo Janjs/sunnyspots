@@ -6,8 +6,6 @@ const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY
 const placesApiUrl = "https://places.googleapis.com/v1/places"
 const mapsApiUrl =
   "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-const mockedPlacesApiUrl = "http://localhost:3010/places"
-const mockedMapsApiUrl = "http://localhost:3020/places"
 
 export async function fetchPlaceSuggestions(
   query: string,
@@ -28,7 +26,7 @@ export async function fetchPlaceSuggestions(
     includedPrimaryTypes: ["restaurant", "bar"],
   }
 
-  const response = await fetch(`${mockedPlacesApiUrl}:autocomplete`, {
+  const response = await fetch(`${placesApiUrl}:autocomplete`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -47,7 +45,7 @@ export async function fetchPlaceSuggestions(
 export async function fetchPlaceDetails(
   placeId: string
 ): Promise<PlaceSelectData> {
-  const detailsUrl = `${mockedPlacesApiUrl}/${placeId}?fields=location,formattedAddress,outdoorSeating`
+  const detailsUrl = `${placesApiUrl}/${placeId}?fields=location,formattedAddress,outdoorSeating`
   const response = await fetch(detailsUrl, {
     method: "GET",
     headers: {
@@ -118,7 +116,7 @@ export async function searchTopOutdoorPlaces({
   })
 
   try {
-    const response = await fetch(`${mockedMapsApiUrl}/nearbysearch?${params}`)
+    const response = await fetch(`${mapsApiUrl}?${params}`)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch nearby places: ${response.statusText}`)
