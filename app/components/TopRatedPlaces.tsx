@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Star, Sun } from "lucide-react"
 import {
@@ -31,6 +31,15 @@ export default function TopRatedPlaces({
   const [places, setPlaces] = useState<PlaceWithPhoto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const prevLocationRef = useRef<{ lat: number; lng: number } | null>(null)
+
+  const hasLocationChanged = () => {
+    if (!prevLocationRef.current) return true
+    return (
+      prevLocationRef.current.lat !== location.lat ||
+      prevLocationRef.current.lng !== location.lng
+    )
+  }
 
   // Load photos for a single place
   const loadPlacePhoto = async (
@@ -77,6 +86,9 @@ export default function TopRatedPlaces({
 
   useEffect(() => {
     const fetchTopPlaces = async () => {
+      // Skip if location hasn't changed
+      if (!hasLocationChanged()) return
+
       setLoading(true)
       setError(null)
 
@@ -109,6 +121,8 @@ export default function TopRatedPlaces({
         })
 
         onPlacesLoaded?.(topPlaces)
+        // Update the previous location after successful fetch
+        prevLocationRef.current = location
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred")
         console.error(err)
