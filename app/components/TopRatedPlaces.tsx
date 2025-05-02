@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Star, Sun } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import {
   getPlacePhotoUrl,
   searchTopOutdoorPlaces,
@@ -16,6 +15,7 @@ interface TopRatedPlacesProps {
     geometry: { location: { lat: number; lng: number } }
     outdoorSeating: boolean
   }) => void
+  onPlacesLoaded?: (places: PlaceResult[]) => void
 }
 
 interface PlaceWithPhoto extends PlaceResult {
@@ -26,50 +26,54 @@ interface PlaceWithPhoto extends PlaceResult {
 export default function TopRatedPlaces({
   location,
   onPlaceSelect,
+  onPlacesLoaded,
 }: TopRatedPlacesProps) {
   const [places, setPlaces] = useState<PlaceWithPhoto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Separate effect for loading photos
-  useEffect(() => {
-    const loadPhotos = async () => {
-      const updatedPlaces = await Promise.all(
-        places.map(async (place) => {
-          if (
-            place.photos?.[0] &&
-            !place.photoDataUrl &&
-            !place.isLoadingPhoto
-          ) {
-            try {
-              // Mark as loading
-              setPlaces((current) =>
-                current.map((p) =>
-                  p.place_id === place.place_id
-                    ? { ...p, isLoadingPhoto: true }
-                    : p
-                )
-              )
+  // Load photos for a single place
+  const loadPlacePhoto = async (
+    place: PlaceWithPhoto
+  ): Promise<PlaceWithPhoto> => {
+    if (!place.photos?.[0] || place.photoDataUrl || place.isLoadingPhoto) {
+      return place
+    }
 
-              const photoDataUrl = await getPlacePhotoUrl(
-                place.photos[0].photo_reference
-              )
-              return { ...place, photoDataUrl, isLoadingPhoto: false }
-            } catch (err) {
-              console.error("Error fetching photo for place:", place.name, err)
-              return { ...place, isLoadingPhoto: false }
-            }
-          }
-          return place
-        })
+    try {
+      const photoDataUrl = await getPlacePhotoUrl(
+        place.photos[0].photo_reference
       )
+      console.log("response", photoDataUrl)
+      return { ...place, photoDataUrl, isLoadingPhoto: false }
+    } catch (err) {
+      console.error("Error fetching photo for place:", place.name, err)
+      return { ...place, isLoadingPhoto: false }
+    }
+  }
+
+  // Effect to load photos when places change
+  useEffect(() => {
+    if (places.length === 0) return
+
+    const loadPhotos = async () => {
+      // Mark all places as loading that need photos
+      setPlaces((current) =>
+        current.map((place) =>
+          place.photos?.[0] && !place.photoDataUrl && !place.isLoadingPhoto
+            ? { ...place, isLoadingPhoto: true }
+            : place
+        )
+      )
+
+      // Load photos for all places
+      const updatedPlaces = await Promise.all(places.map(loadPlacePhoto))
+
       setPlaces(updatedPlaces)
     }
 
-    if (places.length > 0) {
-      loadPhotos()
-    }
-  }, [places.length]) // Only run when places are initially loaded
+    loadPhotos()
+  }, [places.length])
 
   useEffect(() => {
     const fetchTopPlaces = async () => {
@@ -83,7 +87,14 @@ export default function TopRatedPlaces({
           keyword: "outdoor seating",
         })
 
-        setPlaces(results.slice(0, 5))
+        const topPlaces = results.slice(0, 5).map((place) => ({
+          ...place,
+          isLoadingPhoto: false,
+          photoDataUrl: undefined,
+        }))
+
+        setPlaces(topPlaces)
+        onPlacesLoaded?.(topPlaces)
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred")
         console.error(err)
@@ -93,7 +104,7 @@ export default function TopRatedPlaces({
     }
 
     fetchTopPlaces()
-  }, [location])
+  }, [location, onPlacesLoaded])
 
   const handlePlaceClick = (place: PlaceWithPhoto) => {
     onPlaceSelect({
@@ -116,46 +127,43 @@ export default function TopRatedPlaces({
       {places.length === 0 ? (
         <p className="text-sm text-muted-foreground">No places found nearby</p>
       ) : (
-        places.map((place) => (
-          <Card key={place.place_id} className="overflow-hidden relative group">
-            {place.photoDataUrl && (
-              <div className="absolute inset-0 z-0">
-                <img
-                  src={place.photoDataUrl}
-                  alt={place.name}
-                  className="object-cover w-full h-full opacity-20 group-hover:opacity-30 transition-opacity"
-                />
-              </div>
-            )}
-            <div className="relative z-10">
-              <CardHeader className="p-3 pb-1">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-base font-medium">
-                      {place.name}
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {place.vicinity}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Sun className="h-4 w-4 text-amber-500" />
-                  </div>
+        places.map((place) => {
+          console.log(place.photoDataUrl)
+          return (
+            <Card
+              key={place.place_id}
+              className="overflow-hidden relative group cursor-pointer transition-all hover:ring-1 hover:ring-border hover:shadow-lg"
+              onClick={() => handlePlaceClick(place)}
+            >
+              {place.photoDataUrl && (
+                <div className="absolute inset-0 z-0">
+                  <img
+                    src={place.photoDataUrl}
+                    alt={place.name}
+                    className="object-cover w-full h-full opacity-50 group-hover:opacity-50 transition-opacity"
+                  />
                 </div>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs bg-background/80 backdrop-blur-sm hover:bg-background/90"
-                  onClick={() => handlePlaceClick(place)}
-                >
-                  Add to Map
-                </Button>
-              </CardContent>
-            </div>
-          </Card>
-        ))
+              )}
+              <div className="relative z-10 bg-background/60 backdrop-blur-[2px]">
+                <CardHeader className="p-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="text-base font-medium transition-colors">
+                        {place.name}
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {place.vicinity}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Sun className="h-4 w-4 text-accent-foreground" />
+                    </div>
+                  </div>
+                </CardHeader>
+              </div>
+            </Card>
+          )
+        })
       )}
     </div>
   )

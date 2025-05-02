@@ -27,6 +27,11 @@ interface MapViewProps {
 interface MapViewRef {
   addMarker: (coordinates: Location, outdoorSeating: boolean) => void
   setDate: (date: Date) => void
+  clearMarkers: () => void
+  addMarkers: (
+    places: { geometry: { location: Location }; outdoorSeating: boolean }[]
+  ) => void
+  centerOnLocation: (coordinates: Location) => void
 }
 
 const SHADEMAP_API_KEY = process.env.NEXT_PUBLIC_SHADEMAP_API_KEY
@@ -37,16 +42,10 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const mapContainer = useRef<HTMLDivElement>(null)
     const map = useRef<mapboxgl.Map | null>(null)
     const shadeMap = useRef<any>(null)
-    const marker = useRef<mapboxgl.Marker | null>(null)
+    const markers = useRef<mapboxgl.Marker[]>([])
 
-    const addMarker = (coordinates: Location, outdoorSeating: boolean) => {
-      if (marker.current) {
-        marker.current.remove()
-      }
-
-      // Create a custom marker element
+    const createMarkerElement = () => {
       const el = document.createElement("div")
-      // Create SVG using Lucide's Sun icon path
       el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun">
         <circle cx="12" cy="12" r="4"/>
         <path d="M12 2v2"/>
@@ -58,16 +57,41 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         <path d="M4.93 19.07l1.41-1.41"/>
         <path d="M17.66 6.34l1.41-1.41"/>
       </svg>`
-      el.style.color = "#fbbf24" // Amber-400 color
+      el.style.color = "#fbbf24"
       el.style.cursor = "pointer"
       el.style.background = "none"
       el.style.border = "none"
-      el.style.transform = "translate(-50%, -50%)" // Center the icon
+      el.style.transform = "translate(-50%, -50%)"
+      return el
+    }
 
-      marker.current = new mapboxgl.Marker({ element: el })
+    const clearMarkers = () => {
+      markers.current.forEach((marker) => marker.remove())
+      markers.current = []
+    }
+
+    const addMarkers = (
+      places: { geometry: { location: Location }; outdoorSeating: boolean }[]
+    ) => {
+      clearMarkers()
+      places.forEach((place) => {
+        const marker = new mapboxgl.Marker({ element: createMarkerElement() })
+          .setLngLat([place.geometry.location.lng, place.geometry.location.lat])
+          .addTo(map.current!)
+        markers.current.push(marker)
+      })
+    }
+
+    const addMarker = (coordinates: Location, outdoorSeating: boolean) => {
+      clearMarkers()
+      const marker = new mapboxgl.Marker({ element: createMarkerElement() })
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!)
+      markers.current.push(marker)
+      centerOnLocation(coordinates)
+    }
 
+    const centerOnLocation = (coordinates: Location) => {
       map.current?.panTo([coordinates.lng, coordinates.lat], {
         duration: 1000,
       })
@@ -101,6 +125,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     useImperativeHandle(ref, () => ({
       addMarker,
       setDate,
+      clearMarkers,
+      addMarkers,
+      centerOnLocation,
     }))
 
     useEffect(() => {

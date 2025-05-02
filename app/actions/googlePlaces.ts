@@ -196,13 +196,20 @@ export async function getPlacePhotoUrl(
 ): Promise<string> {
   const response = await fetch(
     `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${GOOGLE_API_KEY}`,
-    { next: { revalidate: ONE_DAY_IN_SECONDS } }
+    {
+      next: { revalidate: ONE_DAY_IN_SECONDS },
+      cache: "force-cache",
+    }
   )
 
   const arrayBuffer = await response.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
   const base64Image = buffer.toString("base64")
   const contentType = response.headers.get("content-type") || "image/jpeg"
-
+  console.log(
+    `[Places API] Photo URL: ${`data:${contentType};base64,${
+      base64Image ? "yes" : "no"
+    }`}`
+  )
   return `data:${contentType};base64,${base64Image}`
 }

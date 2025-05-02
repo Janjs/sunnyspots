@@ -9,10 +9,27 @@ import PlacesAutocomplete, {
 import { DateTimePicker } from "@/app/components/DateTimePicker"
 import TopRatedPlaces from "@/app/components/TopRatedPlaces"
 import SunCalc from "suncalc"
+import type { PlaceResult } from "@/app/actions/googlePlaces"
 
 const DEFAULT_LOCATION = {
   lat: 52.09178,
   lng: 5.1205,
+}
+
+interface MapViewRef {
+  addMarker: (
+    coordinates: { lat: number; lng: number },
+    outdoorSeating: boolean
+  ) => void
+  setDate: (date: Date) => void
+  addMarkers: (
+    places: {
+      geometry: { location: { lat: number; lng: number } }
+      outdoorSeating: boolean
+    }[]
+  ) => void
+  centerOnLocation: (coordinates: { lat: number; lng: number }) => void
+  clearMarkers: () => void
 }
 
 export default function MapUI() {
@@ -27,13 +44,7 @@ export default function MapUI() {
     )
     return new Date(times.sunrise.getTime() + 60 * 60 * 1000) // 1 hour after sunrise
   })
-  const mapViewRef = useRef<{
-    addMarker: (
-      coordinates: { lat: number; lng: number },
-      outdoorSeating: boolean
-    ) => void
-    setDate: (date: Date) => void
-  } | null>(null)
+  const mapViewRef = useRef<MapViewRef | null>(null)
 
   const handlePlaceSelect = (place: PlaceSelectData) => {
     if (place.geometry?.location) {
@@ -61,7 +72,15 @@ export default function MapUI() {
       lat: place.geometry.location.lat,
       lng: place.geometry.location.lng,
     }
-    mapViewRef.current?.addMarker(coordinates, place.outdoorSeating)
+    mapViewRef.current?.centerOnLocation(coordinates)
+  }
+
+  const handlePlacesLoaded = (places: PlaceResult[]) => {
+    const placesWithOutdoorSeating = places.map((place) => ({
+      geometry: place.geometry,
+      outdoorSeating: true,
+    }))
+    mapViewRef.current?.addMarkers(placesWithOutdoorSeating)
   }
 
   return (
@@ -95,6 +114,7 @@ export default function MapUI() {
           <TopRatedPlaces
             location={currentLocation}
             onPlaceSelect={handlePlaceFromListSelect}
+            onPlacesLoaded={handlePlacesLoaded}
           />
         </div>
       </div>
