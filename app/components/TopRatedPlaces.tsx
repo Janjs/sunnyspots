@@ -142,56 +142,59 @@ export default function TopRatedPlaces({
   }
 
   if (loading) {
-    return <div className="p-4">Loading top places...</div>
+    return (
+      <div className="p-4 text-muted-foreground">Loading top places...</div>
+    )
   }
 
   if (error) {
-    return <div className="p-4 text-red-500">Error: {error}</div>
+    return <div className="p-4 text-destructive">Error: {error}</div>
   }
 
   return (
     <div className="space-y-3">
-      <h3 className="font-medium">Top Rated Outdoor Places</h3>
+      <h3 className="font-medium text-foreground">Top Rated Outdoor Places</h3>
       {places.length === 0 ? (
         <p className="text-sm text-muted-foreground">No places found nearby</p>
       ) : (
-        places.map((place) => {
-          console.log(place.photoDataUrl)
-          return (
+        <div className="grid grid-cols-2 gap-6">
+          {places.map((place) => (
             <Card
               key={place.place_id}
-              className="overflow-hidden relative group cursor-pointer transition-all hover:ring-1 hover:ring-border hover:shadow-lg"
+              className="overflow-hidden relative group cursor-pointer transition-all hover:ring-1 hover:shadow-md h-64"
               onClick={() => handlePlaceClick(place)}
             >
               {place.photoDataUrl && (
                 <div className="absolute inset-0 z-0">
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/80 to-background" />
                   <img
                     src={place.photoDataUrl}
                     alt={place.name}
-                    className="object-cover w-full h-full opacity-50 group-hover:opacity-50 transition-opacity"
+                    className="object-cover w-full h-full opacity-60 group-hover:opacity-70 transition-opacity"
                   />
                 </div>
               )}
-              <div className="relative z-10 bg-background/60 backdrop-blur-[2px]">
-                <CardHeader className="p-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-base font-medium transition-colors">
-                        {place.name}
-                      </CardTitle>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {place.vicinity}
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Sun className="h-4 w-4 text-accent-foreground" />
+              <div className="relative z-10 flex flex-col h-full">
+                <CardHeader className="p-3 flex-1">
+                  <div className="flex flex-col h-full justify-between">
+                    <div></div>
+                    <div className="flex justify-between items-end w-full">
+                      <div>
+                        <CardTitle className="text-base font-bold transition-colors">
+                          {place.name}
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {place.vicinity}
+                        </p>
+                      </div>
+                      <Sun className="h-4 w-4 text-primary" />
                     </div>
                   </div>
                 </CardHeader>
               </div>
             </Card>
-          )
-        })
+          ))}
+        </div>
       )}
     </div>
   )

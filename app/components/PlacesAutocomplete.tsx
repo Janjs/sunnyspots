@@ -80,16 +80,18 @@ export default function PlacesAutocomplete({
 
   return (
     <div>
-      <Command>
+      <Command className="bg-background border border-input rounded-md">
         <CommandInput
           placeholder="Search bars and restaurants..."
           value={value}
           onValueChange={handleSearch}
-          className="h-9"
+          className="h-9 text-foreground"
         />
         {value && places.length > 0 && (
-          <CommandList>
-            <CommandEmpty>No places found.</CommandEmpty>
+          <CommandList className="bg-popover">
+            <CommandEmpty className="text-muted-foreground">
+              No places found.
+            </CommandEmpty>
             <CommandGroup>
               {places.map((place: Place) => (
                 <CommandItem
@@ -100,10 +102,11 @@ export default function PlacesAutocomplete({
                     setValue(place.structuredFormat.mainText.text)
                     handleSelect(place)
                   }}
+                  className="text-popover-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
+                      "mr-2 h-4 w-4 text-primary",
                       value === place.structuredFormat.mainText.text
                         ? "opacity-100"
                         : "opacity-0"

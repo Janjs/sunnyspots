@@ -86,41 +86,46 @@ export default function MapUI() {
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Left sidebar with controls */}
-      <div className="flex w-[350px] flex-col gap-4 bg-white p-4 shadow-md overflow-y-auto">
-        <h2 className="text-xl font-semibold">
-          Find sunny terraces in Utrecht
-        </h2>
+      <div className="flex-1 flex justify-center">
+        <div className="max-w-xl flex-col gap-4 bg-background p-6 overflow-y-auto">
+          <h2 className="text-xl font-semibold text-foreground">
+            Find sunny terraces in Utrecht
+          </h2>
 
-        <div className="space-y-2">
-          <Label htmlFor="place-search">Search location</Label>
-          <PlacesAutocomplete
-            onPlaceSelect={handlePlaceSelect}
-            defaultLocation={DEFAULT_LOCATION}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="date-time">Select date and time</Label>
-          <DateTimePicker date={currentDate} setDate={handleDateChange} />
-        </div>
-
-        {loadingPercentage > 0 && loadingPercentage < 100 && (
-          <div className="mt-4 rounded-md bg-gray-100 px-3 py-2 text-sm">
-            Loading map: {loadingPercentage}%
+          <div className="space-y-2">
+            <Label htmlFor="place-search" className="text-foreground">
+              Search location
+            </Label>
+            <PlacesAutocomplete
+              onPlaceSelect={handlePlaceSelect}
+              defaultLocation={DEFAULT_LOCATION}
+            />
           </div>
-        )}
 
-        <div className="mt-2">
-          <TopRatedPlaces
-            location={currentLocation}
-            onPlaceSelect={handlePlaceFromListSelect}
-            onPlacesLoaded={handlePlacesLoaded}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="date-time" className="text-foreground">
+              Select date and time
+            </Label>
+            <DateTimePicker date={currentDate} setDate={handleDateChange} />
+          </div>
+
+          {loadingPercentage > 0 && loadingPercentage < 100 && (
+            <div className="mt-4 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+              Loading map: {loadingPercentage}%
+            </div>
+          )}
+
+          <div className="mt-2">
+            <TopRatedPlaces
+              location={currentLocation}
+              onPlaceSelect={handlePlaceFromListSelect}
+              onPlacesLoaded={handlePlacesLoaded}
+            />
+          </div>
         </div>
       </div>
-
       {/* Map container on the right */}
-      <div className="relative flex-1">
+      <div className="relative flex-1  bg-background">
         <MapView
           ref={mapViewRef}
           onLoadingProgress={setLoadingPercentage}
