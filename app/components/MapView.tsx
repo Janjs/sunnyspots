@@ -10,6 +10,7 @@ import {
 } from "react"
 import mapboxgl from "mapbox-gl"
 import ShadeMap from "mapbox-gl-shadow-simulator"
+import { Sun } from "lucide-react"
 import "mapbox-gl/dist/mapbox-gl.css"
 
 interface Location {
@@ -43,9 +44,27 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         marker.current.remove()
       }
 
-      const markerColor = outdoorSeating ? "#00FF00" : "#FF0000" // Green if outdoorSeating, red otherwise
+      // Create a custom marker element
+      const el = document.createElement("div")
+      // Create SVG using Lucide's Sun icon path
+      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2"/>
+        <path d="M12 20v2"/>
+        <path d="M4.93 4.93l1.41 1.41"/>
+        <path d="M17.66 17.66l1.41 1.41"/>
+        <path d="M2 12h2"/>
+        <path d="M20 12h2"/>
+        <path d="M4.93 19.07l1.41-1.41"/>
+        <path d="M17.66 6.34l1.41-1.41"/>
+      </svg>`
+      el.style.color = "#fbbf24" // Amber-400 color
+      el.style.cursor = "pointer"
+      el.style.background = "none"
+      el.style.border = "none"
+      el.style.transform = "translate(-50%, -50%)" // Center the icon
 
-      marker.current = new mapboxgl.Marker({ color: markerColor })
+      marker.current = new mapboxgl.Marker({ element: el })
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!)
 

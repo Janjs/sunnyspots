@@ -4,9 +4,11 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Star, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { searchTopOutdoorPlaces } from "@/app/actions/googlePlaces"
+import {
+  getPlacePhotoUrl,
+  searchTopOutdoorPlaces,
+} from "@/app/actions/googlePlaces"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
-import Image from "next/image"
 
 interface TopRatedPlacesProps {
   location: { lat: number; lng: number }
@@ -16,13 +18,58 @@ interface TopRatedPlacesProps {
   }) => void
 }
 
+interface PlaceWithPhoto extends PlaceResult {
+  photoDataUrl?: string
+  isLoadingPhoto?: boolean
+}
+
 export default function TopRatedPlaces({
   location,
   onPlaceSelect,
 }: TopRatedPlacesProps) {
-  const [places, setPlaces] = useState<PlaceResult[]>([])
+  const [places, setPlaces] = useState<PlaceWithPhoto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Separate effect for loading photos
+  useEffect(() => {
+    const loadPhotos = async () => {
+      const updatedPlaces = await Promise.all(
+        places.map(async (place) => {
+          if (
+            place.photos?.[0] &&
+            !place.photoDataUrl &&
+            !place.isLoadingPhoto
+          ) {
+            try {
+              // Mark as loading
+              setPlaces((current) =>
+                current.map((p) =>
+                  p.place_id === place.place_id
+                    ? { ...p, isLoadingPhoto: true }
+                    : p
+                )
+              )
+
+              const photoDataUrl = await getPlacePhotoUrl(
+                place.photos[0].photo_reference
+              )
+              return { ...place, photoDataUrl, isLoadingPhoto: false }
+            } catch (err) {
+              console.error("Error fetching photo for place:", place.name, err)
+              return { ...place, isLoadingPhoto: false }
+            }
+          }
+          return place
+        })
+      )
+      setPlaces(updatedPlaces)
+    }
+
+    if (places.length > 0) {
+      loadPhotos()
+    }
+  }, [places.length]) // Only run when places are initially loaded
 
   useEffect(() => {
     const fetchTopPlaces = async () => {
@@ -36,8 +83,6 @@ export default function TopRatedPlaces({
           keyword: "outdoor seating",
         })
 
-        console.log("results", results)
-
         setPlaces(results.slice(0, 5))
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred")
@@ -50,7 +95,7 @@ export default function TopRatedPlaces({
     fetchTopPlaces()
   }, [location])
 
-  const handlePlaceClick = (place: PlaceResult) => {
+  const handlePlaceClick = (place: PlaceWithPhoto) => {
     onPlaceSelect({
       geometry: place.geometry,
       outdoorSeating: true,
@@ -73,14 +118,12 @@ export default function TopRatedPlaces({
       ) : (
         places.map((place) => (
           <Card key={place.place_id} className="overflow-hidden relative group">
-            {place.photos && place.photos[0] && (
+            {place.photoDataUrl && (
               <div className="absolute inset-0 z-0">
-                <Image
-                  src={""}
+                <img
+                  src={place.photoDataUrl}
                   alt={place.name}
-                  fill
-                  className="object-cover opacity-20 group-hover:opacity-30 transition-opacity"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover w-full h-full opacity-20 group-hover:opacity-30 transition-opacity"
                 />
               </div>
             )}

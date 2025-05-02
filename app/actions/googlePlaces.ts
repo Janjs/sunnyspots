@@ -139,6 +139,7 @@ export async function searchTopOutdoorPlaces({
     radius: radius.toString(),
     type,
     keyword,
+    rankby: "prominence",
     key: GOOGLE_API_KEY as string,
   })
   console.log(
@@ -180,8 +181,6 @@ export async function searchTopOutdoorPlaces({
         },
       },
       photos: place.photos,
-      opening_hours: place.opening_hours,
-      price_level: place.price_level,
       user_ratings_total: place.user_ratings_total,
       business_status: place.business_status,
     }))
@@ -189,4 +188,21 @@ export async function searchTopOutdoorPlaces({
     console.error("Error fetching nearby places:", error)
     throw error
   }
+}
+
+export async function getPlacePhotoUrl(
+  photoReference: string,
+  maxWidth: number = 400
+): Promise<string> {
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${GOOGLE_API_KEY}`,
+    { next: { revalidate: ONE_DAY_IN_SECONDS } }
+  )
+
+  const arrayBuffer = await response.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+  const base64Image = buffer.toString("base64")
+  const contentType = response.headers.get("content-type") || "image/jpeg"
+
+  return `data:${contentType};base64,${base64Image}`
 }
