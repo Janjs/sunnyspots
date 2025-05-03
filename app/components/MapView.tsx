@@ -12,6 +12,8 @@ import mapboxgl from "mapbox-gl"
 import ShadeMap from "mapbox-gl-shadow-simulator"
 import { Sun } from "lucide-react"
 import "mapbox-gl/dist/mapbox-gl.css"
+import { cn } from "@/lib/utils"
+import { buttonVariants } from "@/components/ui/button"
 
 interface Location {
   lat: number
@@ -46,7 +48,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
     const createMarkerElement = () => {
       const el = document.createElement("div")
-      el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun">
+      el.className = cn(
+        buttonVariants({ variant: "secondary", size: "icon" }),
+        "rounded-full bg-white shadow-md hover:bg-white/90"
+      )
+
+      // Add Sun icon
+      const iconElement = document.createElement("div")
+      iconElement.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun">
         <circle cx="12" cy="12" r="4"/>
         <path d="M12 2v2"/>
         <path d="M12 20v2"/>
@@ -57,11 +66,16 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         <path d="M4.93 19.07l1.41-1.41"/>
         <path d="M17.66 6.34l1.41-1.41"/>
       </svg>`
-      el.style.color = "#fbbf24"
+      iconElement.style.color = "#fbbf24"
+      iconElement.style.display = "flex"
+      iconElement.style.justifyContent = "center"
+      iconElement.style.alignItems = "center"
+
+      el.appendChild(iconElement)
       el.style.cursor = "pointer"
-      el.style.background = "none"
-      el.style.border = "none"
       el.style.transform = "translate(-50%, -50%)"
+      el.style.width = "2rem"
+      el.style.height = "2rem"
       return el
     }
 

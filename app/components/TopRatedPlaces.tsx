@@ -167,7 +167,7 @@ export default function TopRatedPlaces({
               <div className="absolute inset-0 z-0 ">
                 {place.photoDataUrl && (
                   <>
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500 via-blue-500/50 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500 from-20% via-blue-500/50" />
                     <img
                       src={place.photoDataUrl}
                       alt={place.name}
@@ -189,7 +189,9 @@ export default function TopRatedPlaces({
                           {place.vicinity}
                         </p>
                       </div>
-                      <Sun className="h-4 w-4 text-yellow-300" />
+                      <div className="min-w-4 min-h-4">
+                        <Sun className="h-4 w-4 text-yellow-300" />
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
