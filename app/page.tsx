@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label"
 import PlacesAutocomplete, {
   PlaceSelectData,
 } from "@/app/components/PlacesAutocomplete"
-import { DateTimePicker } from "@/app/components/DateTimePicker"
+import { DatePicker } from "@/app/components/DatePicker"
+import { TimePicker } from "@/components/TimePicker"
 import TopRatedPlaces from "@/app/components/TopRatedPlaces"
 import SunCalc from "suncalc"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
@@ -59,9 +60,31 @@ export default function MapUI() {
     }
   }
 
-  const handleDateChange = (date: Date) => {
-    setCurrentDate(date)
-    mapViewRef.current?.setDate(date)
+  const handleDateChange = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      // Create a new date object based on the existing state
+      const updatedDateTime = new Date(currentDate)
+
+      // Update only the year, month, and day from the selected date
+      updatedDateTime.setFullYear(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate()
+      )
+
+      // Update the state with the combined date and time
+      setCurrentDate(updatedDateTime)
+      mapViewRef.current?.setDate(updatedDateTime)
+    }
+    // If selectedDate is undefined, do nothing, keep the current date & time
+  }
+
+  // Add handler for TimePicker
+  const handleTimeChange = (newTime: Date) => {
+    const updatedDateTime = new Date(currentDate)
+    updatedDateTime.setHours(newTime.getHours(), newTime.getMinutes())
+    setCurrentDate(updatedDateTime)
+    mapViewRef.current?.setDate(updatedDateTime)
   }
 
   const handlePlaceFromListSelect = (place: {
@@ -106,7 +129,10 @@ export default function MapUI() {
             <Label htmlFor="date-time" className="text-foreground">
               Select date and time
             </Label>
-            <DateTimePicker date={currentDate} setDate={handleDateChange} />
+            <div className="flex flex-col gap-2">
+              <DatePicker date={currentDate} setDate={handleDateChange} />
+              <TimePicker date={currentDate} setDate={handleTimeChange} />
+            </div>
           </div>
 
           {loadingPercentage > 0 && loadingPercentage < 100 && (
