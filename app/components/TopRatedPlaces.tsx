@@ -3,11 +3,9 @@
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Star, Sun } from "lucide-react"
-import {
-  getPlacePhotoUrl,
-  searchTopOutdoorPlaces,
-} from "@/app/actions/googlePlaces"
+import { searchTopOutdoorPlaces } from "@/app/actions/googlePlaces"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
+import Image from "next/image"
 
 interface TopRatedPlacesProps {
   location: { lat: number; lng: number }
@@ -19,8 +17,63 @@ interface TopRatedPlacesProps {
 }
 
 interface PlaceWithPhoto extends PlaceResult {
-  photoDataUrl?: string
-  isLoadingPhoto?: boolean
+  photoUrl?: string
+}
+
+const PlaceCard = ({
+  place,
+  onClick,
+}: {
+  place: PlaceWithPhoto
+  onClick: () => void
+}) => {
+  const photoReference = place.photos?.[0]?.photo_reference
+  const photoUrl = photoReference
+    ? `/api/place/photo?reference=${encodeURIComponent(
+        photoReference
+      )}&width=400`
+    : undefined
+
+  return (
+    <Card
+      className="overflow-hidden relative group cursor-pointer transition-all hover:ring-1 hover:shadow-md from-blue-500 h-64"
+      onClick={onClick}
+    >
+      <div className="absolute inset-0 z-0">
+        {photoUrl && (
+          <>
+            <Image
+              src={photoUrl}
+              alt={place.name}
+              className="object-cover opacity-100 group-hover:shadow-lg transition-opacity"
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={false}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-blue-500 from-20% via-40% via-blue-500/50" />
+          </>
+        )}
+      </div>
+      <div className="relative z-10 flex flex-col h-full">
+        <CardHeader className="p-3 flex-1">
+          <div className="flex flex-col h-full justify-between">
+            <div></div>
+            <div className="flex justify-between items-end w-full">
+              <div>
+                <CardTitle className="text-base font-bold text-white transition-colors">
+                  {place.name}
+                </CardTitle>
+                <p className="text-xs text-blue-100 mt-0.5">{place.vicinity}</p>
+              </div>
+              <div className="min-w-4 min-h-4">
+                <Sun className="h-4 w-4 text-yellow-300" />
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+      </div>
+    </Card>
+  )
 }
 
 export default function TopRatedPlaces({
@@ -41,52 +94,8 @@ export default function TopRatedPlaces({
     )
   }
 
-  // Load photos for a single place
-  const loadPlacePhoto = async (
-    place: PlaceWithPhoto
-  ): Promise<PlaceWithPhoto> => {
-    if (!place.photos?.[0] || place.photoDataUrl || place.isLoadingPhoto) {
-      return place
-    }
-
-    try {
-      const photoDataUrl = await getPlacePhotoUrl(
-        place.photos[0].photo_reference
-      )
-      console.log("response", photoDataUrl)
-      return { ...place, photoDataUrl, isLoadingPhoto: false }
-    } catch (err) {
-      console.error("Error fetching photo for place:", place.name, err)
-      return { ...place, isLoadingPhoto: false }
-    }
-  }
-
-  // Effect to load photos when places change
-  useEffect(() => {
-    if (places.length === 0) return
-
-    const loadPhotos = async () => {
-      // Mark all places as loading that need photos
-      setPlaces((current) =>
-        current.map((place) =>
-          place.photos?.[0] && !place.photoDataUrl && !place.isLoadingPhoto
-            ? { ...place, isLoadingPhoto: true }
-            : place
-        )
-      )
-
-      // Load photos for all places
-      const updatedPlaces = await Promise.all(places.map(loadPlacePhoto))
-
-      setPlaces(updatedPlaces)
-    }
-
-    loadPhotos()
-  }, [places.length])
-
   useEffect(() => {
     const fetchTopPlaces = async () => {
-      // Skip if location hasn't changed
       if (!hasLocationChanged()) return
 
       setLoading(true)
@@ -99,29 +108,12 @@ export default function TopRatedPlaces({
           keyword: "outdoor seating",
         })
 
-        // Map the results without depending on current places state
-        const topPlaces = results.slice(0, 5).map((place) => ({
+        const topPlaces = results.map((place) => ({
           ...place,
-          isLoadingPhoto: false,
-          photoDataUrl: undefined,
         }))
 
-        // Use the setter function form to access current places state
-        setPlaces((currentPlaces) => {
-          return topPlaces.map((place) => {
-            const existingPlace = currentPlaces.find(
-              (p) => p.place_id === place.place_id
-            )
-            return {
-              ...place,
-              photoDataUrl: existingPlace?.photoDataUrl,
-              isLoadingPhoto: false,
-            }
-          })
-        })
-
+        setPlaces(topPlaces)
         onPlacesLoaded?.(topPlaces)
-        // Update the previous location after successful fetch
         prevLocationRef.current = location
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred")
@@ -133,13 +125,6 @@ export default function TopRatedPlaces({
 
     fetchTopPlaces()
   }, [location, onPlacesLoaded])
-
-  const handlePlaceClick = (place: PlaceWithPhoto) => {
-    onPlaceSelect({
-      geometry: place.geometry,
-      outdoorSeating: true,
-    })
-  }
 
   if (loading) {
     return (
@@ -159,44 +144,16 @@ export default function TopRatedPlaces({
       ) : (
         <div className="grid grid-cols-2 gap-6">
           {places.map((place) => (
-            <Card
+            <PlaceCard
               key={place.place_id}
-              className="overflow-hidden relative group cursor-pointer transition-all hover:ring-1 hover:shadow-md from-blue-500 h-64"
-              onClick={() => handlePlaceClick(place)}
-            >
-              <div className="absolute inset-0 z-0 ">
-                {place.photoDataUrl && (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500 from-20% via-blue-500/50" />
-                    <img
-                      src={place.photoDataUrl}
-                      alt={place.name}
-                      className="object-cover w-full h-full opacity-100 group-hover:shadow-lg transition-opacity"
-                    />
-                  </>
-                )}
-              </div>
-              <div className="relative z-10 flex flex-col h-full">
-                <CardHeader className="p-3 flex-1">
-                  <div className="flex flex-col h-full justify-between">
-                    <div></div>
-                    <div className="flex justify-between items-end w-full">
-                      <div>
-                        <CardTitle className="text-base font-bold text-white transition-colors">
-                          {place.name}
-                        </CardTitle>
-                        <p className="text-xs text-blue-100 mt-0.5">
-                          {place.vicinity}
-                        </p>
-                      </div>
-                      <div className="min-w-4 min-h-4">
-                        <Sun className="h-4 w-4 text-yellow-300" />
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-              </div>
-            </Card>
+              place={place}
+              onClick={() =>
+                onPlaceSelect({
+                  geometry: place.geometry,
+                  outdoorSeating: true,
+                })
+              }
+            />
           ))}
         </div>
       )}
