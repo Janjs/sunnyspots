@@ -7,7 +7,7 @@ import PlacesAutocomplete, {
   PlaceSelectData,
 } from "@/app/components/PlacesAutocomplete"
 import { DatePicker } from "@/app/components/DatePicker"
-import { TimePicker } from "@/components/TimePicker"
+import { TimeSlider } from "@/app/components/TimeSlider"
 import TopRatedPlaces from "@/app/components/TopRatedPlaces"
 import SunCalc from "suncalc"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
@@ -79,14 +79,6 @@ export default function MapUI() {
     // If selectedDate is undefined, do nothing, keep the current date & time
   }
 
-  // Add handler for TimePicker
-  const handleTimeChange = (newTime: Date) => {
-    const updatedDateTime = new Date(currentDate)
-    updatedDateTime.setHours(newTime.getHours(), newTime.getMinutes())
-    setCurrentDate(updatedDateTime)
-    mapViewRef.current?.setDate(updatedDateTime)
-  }
-
   const handlePlaceFromListSelect = (place: {
     geometry: { location: { lat: number; lng: number } }
     outdoorSeating: boolean
@@ -105,6 +97,16 @@ export default function MapUI() {
     }))
     mapViewRef.current?.addMarkers(placesWithOutdoorSeating)
   }
+
+  // Compute sunrise/sunset for current date & location
+  const times = SunCalc.getTimes(
+    currentDate,
+    currentLocation.lat,
+    currentLocation.lng
+  )
+  const sunriseDecimal =
+    times.sunrise.getHours() + times.sunrise.getMinutes() / 60
+  const sunsetDecimal = times.sunset.getHours() + times.sunset.getMinutes() / 60
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
@@ -131,7 +133,19 @@ export default function MapUI() {
             </Label>
             <div className="flex flex-col gap-2">
               <DatePicker date={currentDate} setDate={handleDateChange} />
-              <TimePicker date={currentDate} setDate={handleTimeChange} />
+              <TimeSlider
+                sunriseHour={sunriseDecimal}
+                sunsetHour={sunsetDecimal}
+                value={currentDate.getHours() + currentDate.getMinutes() / 60}
+                onChange={(h: number) => {
+                  const updatedDateTime = new Date(currentDate)
+                  const whole = Math.floor(h)
+                  const mins = Math.round((h - whole) * 60)
+                  updatedDateTime.setHours(whole, mins)
+                  setCurrentDate(updatedDateTime)
+                  mapViewRef.current?.setDate(updatedDateTime)
+                }}
+              />
             </div>
           </div>
 

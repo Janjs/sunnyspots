@@ -320,7 +320,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           map.current = null
         }
       }
-    }, [onLoadingProgress, defaultLocation, initialDate])
+    }, [onLoadingProgress, defaultLocation])
+
+    // Update ShadeMap and markers when initialDate prop changes, without reinitializing the map
+    useEffect(() => {
+      if (shadeMap.current) {
+        setDate(initialDate)
+      }
+    }, [initialDate])
 
     return <div ref={mapContainer} style={{ width: "100%", height: "100vh" }} />
   }
