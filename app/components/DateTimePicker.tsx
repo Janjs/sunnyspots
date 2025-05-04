@@ -63,7 +63,7 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 bg-card/100 border border-border shadow-md"
+        className="w-auto p-0 border border-border shadow-md"
         align="start"
       >
         <div className="bg-card/100">

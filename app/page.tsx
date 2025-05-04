@@ -42,7 +42,7 @@ export default function MapUI() {
       DEFAULT_LOCATION.lat,
       DEFAULT_LOCATION.lng
     )
-    return new Date(times.sunrise.getTime() + 60 * 60 * 1000) // 1 hour after sunrise
+    return new Date(times.sunrise.getTime() + 60 * 60 * 1000) // 1 hour after sunrise: times.sunrise.getTime() + 60 * 60 * 1000
   })
   const mapViewRef = useRef<MapViewRef | null>(null)
 
@@ -118,6 +118,7 @@ export default function MapUI() {
           <div className="mt-2">
             <TopRatedPlaces
               location={currentLocation}
+              dateTime={currentDate}
               onPlaceSelect={handlePlaceFromListSelect}
               onPlacesLoaded={handlePlacesLoaded}
             />

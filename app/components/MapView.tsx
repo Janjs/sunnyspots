@@ -10,10 +10,11 @@ import {
 } from "react"
 import mapboxgl from "mapbox-gl"
 import ShadeMap from "mapbox-gl-shadow-simulator"
-import { Sun } from "lucide-react"
+import { Sun, Moon } from "lucide-react"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { hasSunlight } from "@/utils/sunlight"
 
 interface Location {
   lat: number
@@ -45,28 +46,41 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const map = useRef<mapboxgl.Map | null>(null)
     const shadeMap = useRef<any>(null)
     const markers = useRef<mapboxgl.Marker[]>([])
+    const currentDate = useRef<Date>(initialDate)
 
-    const createMarkerElement = () => {
+    const createMarkerElement = (coordinates: Location) => {
       const el = document.createElement("div")
-      el.className = cn(
-        buttonVariants({ variant: "secondary", size: "icon" }),
-        "rounded-full bg-white shadow-md hover:bg-white/90"
+      const hasSun = hasSunlight(
+        currentDate.current,
+        coordinates.lat,
+        coordinates.lng
       )
 
-      // Add Sun icon
+      el.className = cn(
+        buttonVariants({ variant: "secondary", size: "icon" }),
+        "rounded-full shadow-md hover:bg-white/90 relative",
+        hasSun ? "bg-blue-500" : "bg-gray-700"
+      )
+
+      // Add icon based on sunlight status
       const iconElement = document.createElement("div")
-      iconElement.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun">
-        <circle cx="12" cy="12" r="5"/>
-        <path d="M12 2v2"/>
-        <path d="M12 20v2"/>
-        <path d="M4.93 4.93l1.41 1.41"/>
-        <path d="M17.66 17.66l1.41 1.41"/>
-        <path d="M2 12h2"/>
-        <path d="M20 12h2"/>
-        <path d="M4.93 19.07l1.41-1.41"/>
-        <path d="M17.66 6.34l1.41-1.41"/>
-      </svg>`
-      iconElement.style.color = "#fbbf24"
+      iconElement.innerHTML = hasSun
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 2v2"/>
+            <path d="M12 20v2"/>
+            <path d="M4.93 4.93l1.41 1.41"/>
+            <path d="M17.66 17.66l1.41 1.41"/>
+            <path d="M2 12h2"/>
+            <path d="M20 12h2"/>
+            <path d="M4.93 19.07l1.41-1.41"/>
+            <path d="M17.66 6.34l1.41-1.41"/>
+          </svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>`
+
+      iconElement.style.color = hasSun ? "#fef9c3" : "#94a3b8"
       iconElement.style.display = "flex"
       iconElement.style.justifyContent = "center"
       iconElement.style.alignItems = "center"
@@ -89,7 +103,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     ) => {
       clearMarkers()
       places.forEach((place) => {
-        const marker = new mapboxgl.Marker({ element: createMarkerElement() })
+        const marker = new mapboxgl.Marker({
+          element: createMarkerElement(place.geometry.location),
+        })
           .setLngLat([place.geometry.location.lng, place.geometry.location.lat])
           .addTo(map.current!)
         markers.current.push(marker)
@@ -98,7 +114,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
     const addMarker = (coordinates: Location, outdoorSeating: boolean) => {
       clearMarkers()
-      const marker = new mapboxgl.Marker({ element: createMarkerElement() })
+      const marker = new mapboxgl.Marker({
+        element: createMarkerElement(coordinates),
+      })
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!)
       markers.current.push(marker)
@@ -112,9 +130,26 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     }
 
     const setDate = (date: Date) => {
+      currentDate.current = date
       if (shadeMap.current) {
         shadeMap.current.setDate(date)
       }
+      // Update all existing markers to reflect new sunlight status
+      const existingMarkers = markers.current
+      markers.current = []
+      existingMarkers.forEach((marker) => {
+        const coordinates = marker.getLngLat()
+        const newMarker = new mapboxgl.Marker({
+          element: createMarkerElement({
+            lat: coordinates.lat,
+            lng: coordinates.lng,
+          }),
+        })
+          .setLngLat([coordinates.lng, coordinates.lat])
+          .addTo(map.current!)
+        markers.current.push(newMarker)
+        marker.remove()
+      })
     }
 
     const handleMouseMove = (event: MouseEvent) => {

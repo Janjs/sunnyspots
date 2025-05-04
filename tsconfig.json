@@ -20,7 +20,11 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@/actions/*": ["./app/actions/*"]
+      "@/actions/*": ["./app/actions/*"],
+      "@/lib/*": ["lib/*"],
+      "@/components/*": ["components/*", "app/components/*"],
+      "@/app/*": ["app/*"],
+      "@/utils/*": ["src/utils/*"]
     },
     "baseUrl": "."
   },

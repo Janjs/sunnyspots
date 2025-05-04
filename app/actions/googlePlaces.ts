@@ -206,10 +206,5 @@ export async function getPlacePhotoUrl(
   const buffer = Buffer.from(arrayBuffer)
   const base64Image = buffer.toString("base64")
   const contentType = response.headers.get("content-type") || "image/jpeg"
-  console.log(
-    `[Places API] Photo URL: ${`data:${contentType};base64,${
-      base64Image ? "yes" : "no"
-    }`}`
-  )
   return `data:${contentType};base64,${base64Image}`
 }

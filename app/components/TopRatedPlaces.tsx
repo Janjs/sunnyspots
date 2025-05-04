@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Star, Sun } from "lucide-react"
+import { Star, Sun, Moon } from "lucide-react"
 import { searchTopOutdoorPlaces } from "@/app/actions/googlePlaces"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
 import Image from "next/image"
+import { hasSunlight } from "@/utils/sunlight"
 
 interface TopRatedPlacesProps {
   location: { lat: number; lng: number }
+  dateTime: Date
   onPlaceSelect: (place: {
     geometry: { location: { lat: number; lng: number } }
     outdoorSeating: boolean
@@ -23,9 +25,11 @@ interface PlaceWithPhoto extends PlaceResult {
 const PlaceCard = ({
   place,
   onClick,
+  dateTime,
 }: {
   place: PlaceWithPhoto
   onClick: () => void
+  dateTime: Date
 }) => {
   const photoReference = place.photos?.[0]?.photo_reference
   const photoUrl = photoReference
@@ -33,6 +37,12 @@ const PlaceCard = ({
         photoReference
       )}&width=400`
     : undefined
+
+  const hasSun = hasSunlight(
+    dateTime,
+    place.geometry.location.lat,
+    place.geometry.location.lng
+  )
 
   return (
     <Card
@@ -50,7 +60,13 @@ const PlaceCard = ({
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority={false}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-blue-500 from-20% via-40% via-blue-500/50" />
+            <div
+              className={`absolute inset-0 bg-gradient-to-t ${
+                hasSun
+                  ? "from-blue-500 from-10% via-35% via-blue-500/40"
+                  : "from-gray-700 from-10% via-35% via-gray-700/40"
+              }`}
+            />
           </>
         )}
       </div>
@@ -66,7 +82,11 @@ const PlaceCard = ({
                 <p className="text-xs text-blue-100 mt-0.5">{place.vicinity}</p>
               </div>
               <div className="min-w-4 min-h-4">
-                <Sun className="h-4 w-4 text-yellow-300" />
+                {hasSun ? (
+                  <Sun className="h-4 w-4 text-yellow-100" />
+                ) : (
+                  <Moon className="h-4 w-4 text-slate-400" />
+                )}
               </div>
             </div>
           </div>
@@ -80,6 +100,7 @@ export default function TopRatedPlaces({
   location,
   onPlaceSelect,
   onPlacesLoaded,
+  dateTime,
 }: TopRatedPlacesProps) {
   const [places, setPlaces] = useState<PlaceWithPhoto[]>([])
   const [loading, setLoading] = useState(false)
@@ -147,6 +168,7 @@ export default function TopRatedPlaces({
             <PlaceCard
               key={place.place_id}
               place={place}
+              dateTime={dateTime}
               onClick={() =>
                 onPlaceSelect({
                   geometry: place.geometry,
