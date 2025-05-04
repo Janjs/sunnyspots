@@ -63,27 +63,27 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0 border border-border shadow-md"
+        className="w-auto p-0 border border-border shadow-md bg-white"
         align="start"
       >
-        <div className="bg-card/100">
+        <div>
           <Calendar
             mode="single"
             selected={date}
             onSelect={handleDateSelect}
             initialFocus
-            className="rounded-t-md bg-card/100"
+            className="rounded-t-md"
           />
-          <div className="border-t border-border p-3 flex items-center gap-2 bg-card/100 rounded-b-md">
+          <div className="border-t border-border p-3 flex items-center gap-2 rounded-b-md">
             <Clock className="h-4 w-4 text-foreground" />
             <Select
               value={date.getHours().toString()}
               onValueChange={handleHourChange}
             >
-              <SelectTrigger className="w-[70px] bg-card/100 border-input">
+              <SelectTrigger className="w-[70px] border-input">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-card/100 border-border">
+              <SelectContent className="border-border">
                 {hourOptions.map((hour) => (
                   <SelectItem
                     key={hour}
@@ -100,10 +100,10 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
               value={date.getMinutes().toString()}
               onValueChange={handleMinuteChange}
             >
-              <SelectTrigger className="w-[70px] bg-card/100 border-input">
+              <SelectTrigger className="w-[70px] border-input">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-card/100 border-border">
+              <SelectContent className="border-border">
                 {minuteOptions.map((minute) => (
                   <SelectItem
                     key={minute}
