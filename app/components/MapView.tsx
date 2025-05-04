@@ -270,7 +270,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             maxZoom: 15,
             tileSize: 256,
             getSourceUrl: ({ x, y, z }: { x: number; y: number; z: number }) =>
-              `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${z}/${x}/${y}.png`,
+              `/api/elevation-tile?z=${z}&x=${x}&y=${y}`,
             getElevation: ({ r, g, b }: { r: number; g: number; b: number }) =>
               r * 256 + g + b / 256 - 32768,
             _overzoom: 18,

@@ -37,13 +37,7 @@ export default function MapUI() {
   const [loadingPercentage, setLoadingPercentage] = useState(0)
   const [currentLocation, setCurrentLocation] = useState(DEFAULT_LOCATION)
   const [currentDate, setCurrentDate] = useState(() => {
-    const now = new Date()
-    const times = SunCalc.getTimes(
-      now,
-      DEFAULT_LOCATION.lat,
-      DEFAULT_LOCATION.lng
-    )
-    return new Date(times.sunrise.getTime() + 60 * 60 * 1000) // 1 hour after sunrise: times.sunrise.getTime() + 60 * 60 * 1000
+    return new Date() // 1 hour after sunrise: times.sunrise.getTime() + 60 * 60 * 1000
   })
   const mapViewRef = useRef<MapViewRef | null>(null)
 
