@@ -25,7 +25,9 @@ interface MapViewProps {
   onLoadingProgress: Dispatch<SetStateAction<number>>
   defaultLocation: Location
   initialDate: Date
-  onMarkerSelected?: (coordinates: Location) => void
+  onMarkerSelected?: (
+    coordinates: (Location & { place_id?: string }) | null
+  ) => void
 }
 
 interface MapViewRef {
@@ -33,7 +35,11 @@ interface MapViewRef {
   setDate: (date: Date) => void
   clearMarkers: () => void
   addMarkers: (
-    places: { geometry: { location: Location }; outdoorSeating: boolean }[]
+    places: {
+      geometry: { location: Location }
+      outdoorSeating: boolean
+      place_id?: string
+    }[]
   ) => void
   centerOnLocation: (coordinates: Location) => void
   selectMarkerAtLocation: (coordinates: Location) => void
@@ -137,11 +143,26 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     }
 
     const addMarkers = (
-      places: { geometry: { location: Location }; outdoorSeating: boolean }[]
+      places: {
+        geometry: { location: Location }
+        outdoorSeating: boolean
+        place_id?: string
+      }[]
     ) => {
       clearMarkers()
       places.forEach((place) => {
         const markerElement = createMarkerElement(place.geometry.location)
+
+        // Store place_id as data attribute for reference
+        if (place.place_id) {
+          markerElement.dataset.placeId = place.place_id
+        }
+
+        // Store coordinates in standardized format for reference
+        const coords = place.geometry.location
+        const coordKey = `${coords.lat.toFixed(6)},${coords.lng.toFixed(6)}`
+        markerElement.dataset.coordKey = coordKey
+
         const marker = new mapboxgl.Marker({
           element: markerElement,
         })
@@ -155,7 +176,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             unselectMarker(selectedMarker.current)
             selectedMarker.current = null
             // Notify parent component
-            onMarkerSelected?.(null as any)
+            onMarkerSelected?.(null)
           } else {
             // Unselect previous marker if any
             if (selectedMarker.current) {
@@ -172,10 +193,13 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
               duration: 1000,
             })
 
-            // Notify parent component with precise coordinates
+            // Notify parent component with precise coordinates and place_id if available
+            const placeId = marker.getElement().dataset.placeId
+
             onMarkerSelected?.({
               lat: parseFloat(lngLat.lat.toFixed(6)),
               lng: parseFloat(lngLat.lng.toFixed(6)),
+              place_id: placeId,
             })
           }
         })
@@ -224,7 +248,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           unselectMarker(selectedMarker.current)
           selectedMarker.current = null
           // Notify parent component
-          onMarkerSelected?.(null as any)
+          onMarkerSelected?.(null)
         } else {
           // Unselect previous marker if any
           if (selectedMarker.current) {
@@ -395,10 +419,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           duration: 1000,
         })
 
-        // Notify parent component with precise coordinates - use non-null assertion since we've already checked it exists
+        // Get place_id if available
+        const placeId = marker.getElement().dataset.placeId
+
+        // Notify parent component with precise coordinates
         onMarkerSelected?.({
           lat: parseFloat(lngLat.lat.toFixed(6)),
           lng: parseFloat(lngLat.lng.toFixed(6)),
+          place_id: placeId,
         })
       }
     }

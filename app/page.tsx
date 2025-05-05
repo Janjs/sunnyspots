@@ -46,13 +46,6 @@ export default function MapUI() {
     return new Date() // 1 hour after sunrise: times.sunrise.getTime() + 60 * 60 * 1000
   })
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>()
-  const [selectedCoordinates, setSelectedCoordinates] = useState<{
-    lat: number
-    lng: number
-  } | null>(null)
-  const [placeCoordinatesMap, setPlaceCoordinatesMap] = useState<
-    Map<string, { lat: number; lng: number }>
-  >(new Map())
   const [coordinatesPlaceIdMap, setCoordinatesPlaceIdMap] = useState<
     Map<string, string>
   >(new Map())
@@ -71,7 +64,6 @@ export default function MapUI() {
 
       // Unselect any selected place
       setSelectedPlaceId(undefined)
-      setSelectedCoordinates(null)
     }
   }
 
@@ -106,51 +98,47 @@ export default function MapUI() {
     // selectMarkerAtLocation now handles centering
     mapViewRef.current?.selectMarkerAtLocation(coordinates)
     setSelectedPlaceId(place.place_id)
-    setSelectedCoordinates(coordinates)
+  }
+
+  const handleMarkerSelected = (
+    coordinates: { lat: number; lng: number; place_id?: string } | null
+  ) => {
+    if (coordinates) {
+      // If place_id is directly available from the marker, use it
+      if (coordinates.place_id) {
+        setSelectedPlaceId(coordinates.place_id)
+        return
+      }
+
+      // Otherwise, try to look it up from the coordinates map
+      const coordKey = `${coordinates.lat.toFixed(6)},${coordinates.lng.toFixed(
+        6
+      )}`
+
+      const placeId = coordinatesPlaceIdMap.get(coordKey)
+      setSelectedPlaceId(placeId)
+    } else {
+      setSelectedPlaceId(undefined)
+    }
   }
 
   const handlePlacesLoaded = (places: PlaceResult[]) => {
     // Create mappings between coordinates and place IDs
     const newCoordinatesPlaceIdMap = new Map<string, string>()
-    const newPlaceCoordinatesMap = new Map<
-      string,
-      { lat: number; lng: number }
-    >()
 
     places.forEach((place) => {
       const coords = place.geometry.location
       const coordKey = `${coords.lat.toFixed(6)},${coords.lng.toFixed(6)}`
-
       newCoordinatesPlaceIdMap.set(coordKey, place.place_id)
-      newPlaceCoordinatesMap.set(place.place_id, coords)
     })
-
     setCoordinatesPlaceIdMap(newCoordinatesPlaceIdMap)
-    setPlaceCoordinatesMap(newPlaceCoordinatesMap)
 
     const placesWithOutdoorSeating = places.map((place) => ({
       geometry: place.geometry,
       outdoorSeating: true,
+      place_id: place.place_id, // Pass place_id to ensure it's available in marker data
     }))
     mapViewRef.current?.addMarkers(placesWithOutdoorSeating)
-  }
-
-  const handleMarkerSelected = (
-    coordinates: { lat: number; lng: number } | null
-  ) => {
-    setSelectedCoordinates(coordinates)
-
-    if (coordinates) {
-      // Find the place ID that corresponds to these coordinates
-      const coordKey = `${coordinates.lat.toFixed(6)},${coordinates.lng.toFixed(
-        6
-      )}`
-      const placeId = coordinatesPlaceIdMap.get(coordKey)
-
-      setSelectedPlaceId(placeId)
-    } else {
-      setSelectedPlaceId(undefined)
-    }
   }
 
   // Compute sunrise/sunset for current date & location
