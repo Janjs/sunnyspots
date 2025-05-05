@@ -7,6 +7,8 @@ import { searchTopOutdoorPlaces } from "@/app/actions/googlePlaces"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
 import Image from "next/image"
 import { hasSunlight } from "@/utils/sunlight"
+import { AspectRatio } from "@/components/ui/aspect-ratio"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface TopRatedPlacesProps {
   location: { lat: number; lng: number }
@@ -52,10 +54,10 @@ const PlaceCard = ({
       <div className="absolute inset-0 z-0">
         {photoUrl && (
           <>
+            {" "}
             <Image
               src={photoUrl}
               alt={place.name}
-              className="object-cover opacity-100 group-hover:shadow-lg transition-opacity"
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority={false}
@@ -106,6 +108,7 @@ export default function TopRatedPlaces({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const prevLocationRef = useRef<{ lat: number; lng: number } | null>(null)
+  const isMobile = useIsMobile()
 
   const hasLocationChanged = () => {
     if (!prevLocationRef.current) return true
@@ -163,7 +166,11 @@ export default function TopRatedPlaces({
       {places.length === 0 ? (
         <p className="text-sm text-muted-foreground">No places found nearby</p>
       ) : (
-        <div className="grid grid-cols-2 gap-6">
+        <div
+          className={`grid grid-cols-2 gap-6 ${
+            isMobile ? "grid-cols-2" : "grid-cols-3"
+          }`}
+        >
           {places.map((place) => (
             <PlaceCard
               key={place.place_id}

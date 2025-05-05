@@ -106,7 +106,7 @@ export default function MapUI() {
     <div className="flex h-screen w-full overflow-hidden">
       {/* Left sidebar with controls */}
       <div className="flex-1 flex justify-center">
-        <div className="max-w-xl flex-col gap-4 bg-background p-6 overflow-y-auto">
+        <div className="min-w-full flex-col gap-4 bg-background p-6 overflow-y-auto">
           <h2 className="text-xl font-semibold text-foreground">
             Find sunny terraces in Utrecht
           </h2>

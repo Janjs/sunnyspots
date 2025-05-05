@@ -218,7 +218,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         style: "mapbox://styles/mapbox/streets-v11",
         center: { lat: defaultLocation.lat, lng: defaultLocation.lng },
         zoom: 15,
-        minZoom: 15,
         hash: true,
         pitch: 0,
       })
