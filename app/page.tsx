@@ -12,6 +12,11 @@ import TopRatedPlaces from "@/app/components/TopRatedPlaces"
 import SunCalc from "suncalc"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
 
+// Extend PlaceResult for our needs
+interface ExtendedPlaceResult extends PlaceResult {
+  place_id: string
+}
+
 const DEFAULT_LOCATION = {
   lat: 52.09178,
   lng: 5.1205,
@@ -31,6 +36,7 @@ interface MapViewRef {
   ) => void
   centerOnLocation: (coordinates: { lat: number; lng: number }) => void
   clearMarkers: () => void
+  selectMarkerAtLocation: (coordinates: { lat: number; lng: number }) => void
 }
 
 export default function MapUI() {
@@ -39,6 +45,17 @@ export default function MapUI() {
   const [currentDate, setCurrentDate] = useState(() => {
     return new Date() // 1 hour after sunrise: times.sunrise.getTime() + 60 * 60 * 1000
   })
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>()
+  const [selectedCoordinates, setSelectedCoordinates] = useState<{
+    lat: number
+    lng: number
+  } | null>(null)
+  const [placeCoordinatesMap, setPlaceCoordinatesMap] = useState<
+    Map<string, { lat: number; lng: number }>
+  >(new Map())
+  const [coordinatesPlaceIdMap, setCoordinatesPlaceIdMap] = useState<
+    Map<string, string>
+  >(new Map())
   const mapViewRef = useRef<MapViewRef | null>(null)
 
   const handlePlaceSelect = (place: PlaceSelectData) => {
@@ -51,6 +68,10 @@ export default function MapUI() {
       setCurrentLocation(coordinates)
       // Add marker using the ref
       mapViewRef.current?.addMarker(coordinates, place.outdoorSeating)
+
+      // Unselect any selected place
+      setSelectedPlaceId(undefined)
+      setSelectedCoordinates(null)
     }
   }
 
@@ -76,20 +97,60 @@ export default function MapUI() {
   const handlePlaceFromListSelect = (place: {
     geometry: { location: { lat: number; lng: number } }
     outdoorSeating: boolean
+    place_id?: string
   }) => {
     const coordinates = {
       lat: place.geometry.location.lat,
       lng: place.geometry.location.lng,
     }
-    mapViewRef.current?.centerOnLocation(coordinates)
+    // selectMarkerAtLocation now handles centering
+    mapViewRef.current?.selectMarkerAtLocation(coordinates)
+    setSelectedPlaceId(place.place_id)
+    setSelectedCoordinates(coordinates)
   }
 
   const handlePlacesLoaded = (places: PlaceResult[]) => {
+    // Create mappings between coordinates and place IDs
+    const newCoordinatesPlaceIdMap = new Map<string, string>()
+    const newPlaceCoordinatesMap = new Map<
+      string,
+      { lat: number; lng: number }
+    >()
+
+    places.forEach((place) => {
+      const coords = place.geometry.location
+      const coordKey = `${coords.lat.toFixed(6)},${coords.lng.toFixed(6)}`
+
+      newCoordinatesPlaceIdMap.set(coordKey, place.place_id)
+      newPlaceCoordinatesMap.set(place.place_id, coords)
+    })
+
+    setCoordinatesPlaceIdMap(newCoordinatesPlaceIdMap)
+    setPlaceCoordinatesMap(newPlaceCoordinatesMap)
+
     const placesWithOutdoorSeating = places.map((place) => ({
       geometry: place.geometry,
       outdoorSeating: true,
     }))
     mapViewRef.current?.addMarkers(placesWithOutdoorSeating)
+  }
+
+  const handleMarkerSelected = (
+    coordinates: { lat: number; lng: number } | null
+  ) => {
+    setSelectedCoordinates(coordinates)
+
+    if (coordinates) {
+      // Find the place ID that corresponds to these coordinates
+      const coordKey = `${coordinates.lat.toFixed(6)},${coordinates.lng.toFixed(
+        6
+      )}`
+      const placeId = coordinatesPlaceIdMap.get(coordKey)
+
+      setSelectedPlaceId(placeId)
+    } else {
+      setSelectedPlaceId(undefined)
+    }
   }
 
   // Compute sunrise/sunset for current date & location
@@ -104,6 +165,16 @@ export default function MapUI() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
+      {/* Map container on the right */}
+      <div className="relative flex-1  bg-background">
+        <MapView
+          ref={mapViewRef}
+          onLoadingProgress={setLoadingPercentage}
+          defaultLocation={DEFAULT_LOCATION}
+          initialDate={currentDate}
+          onMarkerSelected={handleMarkerSelected}
+        />
+      </div>
       {/* Left sidebar with controls */}
       <div className="flex-1 flex justify-center">
         <div className="min-w-full flex-col gap-4 bg-background p-6 overflow-y-auto">
@@ -155,18 +226,10 @@ export default function MapUI() {
               dateTime={currentDate}
               onPlaceSelect={handlePlaceFromListSelect}
               onPlacesLoaded={handlePlacesLoaded}
+              selectedPlaceId={selectedPlaceId}
             />
           </div>
         </div>
-      </div>
-      {/* Map container on the right */}
-      <div className="relative flex-1  bg-background">
-        <MapView
-          ref={mapViewRef}
-          onLoadingProgress={setLoadingPercentage}
-          defaultLocation={DEFAULT_LOCATION}
-          initialDate={currentDate}
-        />
       </div>
     </div>
   )

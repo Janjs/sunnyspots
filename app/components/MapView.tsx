@@ -25,6 +25,7 @@ interface MapViewProps {
   onLoadingProgress: Dispatch<SetStateAction<number>>
   defaultLocation: Location
   initialDate: Date
+  onMarkerSelected?: (coordinates: Location) => void
 }
 
 interface MapViewRef {
@@ -35,18 +36,23 @@ interface MapViewRef {
     places: { geometry: { location: Location }; outdoorSeating: boolean }[]
   ) => void
   centerOnLocation: (coordinates: Location) => void
+  selectMarkerAtLocation: (coordinates: Location) => void
 }
 
 const SHADEMAP_API_KEY = process.env.NEXT_PUBLIC_SHADEMAP_API_KEY
 const MAPBOX_API_KEY = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
 const MapView = forwardRef<MapViewRef, MapViewProps>(
-  ({ onLoadingProgress, defaultLocation, initialDate }, ref) => {
+  (
+    { onLoadingProgress, defaultLocation, initialDate, onMarkerSelected },
+    ref
+  ) => {
     const mapContainer = useRef<HTMLDivElement>(null)
     const map = useRef<mapboxgl.Map | null>(null)
     const shadeMap = useRef<any>(null)
     const markers = useRef<mapboxgl.Marker[]>([])
     const currentDate = useRef<Date>(initialDate)
+    const selectedMarker = useRef<mapboxgl.Marker | null>(null)
 
     const createMarkerElement = (coordinates: Location) => {
       console.log("[createMarkerElement] Creating element for:", coordinates)
@@ -94,14 +100,40 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       el.appendChild(iconElement)
       el.style.cursor = "pointer"
       el.style.transform = "translate(-50%, -50%)"
-      el.style.width = "2rem"
-      el.style.height = "2rem"
+      el.style.width = "1.5rem"
+      el.style.height = "1.5rem"
+      el.style.padding = "0.15rem"
+
+      // Store original colors for flipping
+      const originalBgColor = hasSun ? "rgb(59, 130, 246)" : "rgb(55, 65, 81)" // blue-500 or gray-700
+      const originalIconColor = hasSun ? "#fef9c3" : "#94a3b8" // yellow or slate
+
+      // Add hover event to flip colors
+      el.addEventListener("mouseenter", () => {
+        el.style.backgroundColor = originalIconColor
+        iconElement.style.color = originalBgColor
+      })
+
+      el.addEventListener("mouseleave", () => {
+        // Only reset if not selected
+        if (!el.classList.contains("marker-selected")) {
+          el.style.backgroundColor = originalBgColor
+          iconElement.style.color = originalIconColor
+        }
+      })
+
+      // Store sunlight status as data attribute for later reference
+      el.dataset.hasSun = hasSun.toString()
+      el.dataset.bgColor = originalBgColor
+      el.dataset.iconColor = originalIconColor
+
       return el
     }
 
     const clearMarkers = () => {
       markers.current.forEach((marker) => marker.remove())
       markers.current = []
+      selectedMarker.current = null
     }
 
     const addMarkers = (
@@ -109,22 +141,114 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     ) => {
       clearMarkers()
       places.forEach((place) => {
+        const markerElement = createMarkerElement(place.geometry.location)
         const marker = new mapboxgl.Marker({
-          element: createMarkerElement(place.geometry.location),
+          element: markerElement,
         })
           .setLngLat([place.geometry.location.lng, place.geometry.location.lat])
           .addTo(map.current!)
+
+        // Add click handler to marker
+        marker.getElement().addEventListener("click", () => {
+          if (selectedMarker.current === marker) {
+            // Deselect if already selected
+            unselectMarker(selectedMarker.current)
+            selectedMarker.current = null
+            // Notify parent component
+            onMarkerSelected?.(null as any)
+          } else {
+            // Unselect previous marker if any
+            if (selectedMarker.current) {
+              unselectMarker(selectedMarker.current)
+            }
+
+            // Select this marker
+            selectMarker(marker)
+            selectedMarker.current = marker
+
+            // Center the map on the marker
+            const lngLat = marker.getLngLat()
+            map.current?.panTo([lngLat.lng, lngLat.lat], {
+              duration: 1000,
+            })
+
+            // Notify parent component with precise coordinates
+            onMarkerSelected?.({
+              lat: parseFloat(lngLat.lat.toFixed(6)),
+              lng: parseFloat(lngLat.lng.toFixed(6)),
+            })
+          }
+        })
+
         markers.current.push(marker)
       })
     }
 
+    const selectMarker = (marker: mapboxgl.Marker) => {
+      const el = marker.getElement()
+      const iconElement = el.querySelector("div") as HTMLElement
+      el.classList.add("marker-selected")
+
+      const bgColor = el.dataset.iconColor || ""
+      const iconColor = el.dataset.bgColor || ""
+
+      el.style.backgroundColor = bgColor
+      iconElement.style.color = iconColor
+    }
+
+    const unselectMarker = (marker: mapboxgl.Marker) => {
+      const el = marker.getElement()
+      const iconElement = el.querySelector("div") as HTMLElement
+      el.classList.remove("marker-selected")
+
+      const bgColor = el.dataset.bgColor || ""
+      const iconColor = el.dataset.iconColor || ""
+
+      el.style.backgroundColor = bgColor
+      iconElement.style.color = iconColor
+    }
+
     const addMarker = (coordinates: Location, outdoorSeating: boolean) => {
       clearMarkers()
+      const markerElement = createMarkerElement(coordinates)
       const marker = new mapboxgl.Marker({
-        element: createMarkerElement(coordinates),
+        element: markerElement,
       })
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!)
+
+      // Add click handler to marker
+      marker.getElement().addEventListener("click", () => {
+        if (selectedMarker.current === marker) {
+          // Deselect if already selected
+          unselectMarker(selectedMarker.current)
+          selectedMarker.current = null
+          // Notify parent component
+          onMarkerSelected?.(null as any)
+        } else {
+          // Unselect previous marker if any
+          if (selectedMarker.current) {
+            unselectMarker(selectedMarker.current)
+          }
+
+          // Select this marker
+          selectMarker(marker)
+          selectedMarker.current = marker
+
+          // Center the map on the marker
+          const lngLat = marker.getLngLat()
+          map.current?.panTo([lngLat.lng, lngLat.lat], {
+            duration: 1000,
+          })
+
+          // Notify parent component with precise coordinates
+          onMarkerSelected?.({
+            lat: parseFloat(lngLat.lat.toFixed(6)),
+            lng: parseFloat(lngLat.lng.toFixed(6)),
+          })
+        }
+      })
+
       markers.current.push(marker)
       centerOnLocation(coordinates)
     }
@@ -152,7 +276,16 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       // Defer marker updates to avoid conflict with ShadeMap update
       setTimeout(() => {
         const existingMarkers = markers.current
+        const previouslySelectedMarker = selectedMarker.current
+        let previouslySelectedCoords = null
+
+        if (previouslySelectedMarker) {
+          const lngLat = previouslySelectedMarker.getLngLat()
+          previouslySelectedCoords = { lng: lngLat.lng, lat: lngLat.lat }
+        }
+
         markers.current = []
+        selectedMarker.current = null
 
         existingMarkers.forEach((marker, index) => {
           const coordinates = marker.getLngLat()
@@ -171,8 +304,36 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             .setLngLat([coordinates.lng, coordinates.lat])
             .addTo(map.current!)
 
+          // Add click handler to marker
+          newMarker.getElement().addEventListener("click", () => {
+            if (selectedMarker.current === newMarker) {
+              // Deselect if already selected
+              unselectMarker(selectedMarker.current)
+              selectedMarker.current = null
+            } else {
+              // Unselect previous marker if any
+              if (selectedMarker.current) {
+                unselectMarker(selectedMarker.current)
+              }
+
+              // Select this marker
+              selectMarker(newMarker)
+              selectedMarker.current = newMarker
+            }
+          })
+
           console.log(`[setDate] Pushing new marker ${index} to ref array.`)
           markers.current.push(newMarker)
+
+          // Check if this was the previously selected marker
+          if (
+            previouslySelectedCoords &&
+            coordinates.lng === previouslySelectedCoords.lng &&
+            coordinates.lat === previouslySelectedCoords.lat
+          ) {
+            selectMarker(newMarker)
+            selectedMarker.current = newMarker
+          }
 
           console.log(`[setDate] Removing old marker ${index}`)
           marker.remove()
@@ -200,12 +361,55 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       }
     }, [])
 
+    const selectMarkerAtLocation = (coordinates: Location) => {
+      // Find the marker closest to the given coordinates
+      let foundMarker: mapboxgl.Marker | null = null
+
+      markers.current.forEach((marker) => {
+        const markerPos = marker.getLngLat()
+
+        // Use a more precise comparison by comparing rounded values
+        // This ensures consistency between the marker selection and the coordinate mapping
+        if (
+          markerPos.lng.toFixed(6) === coordinates.lng.toFixed(6) &&
+          markerPos.lat.toFixed(6) === coordinates.lat.toFixed(6)
+        ) {
+          foundMarker = marker
+        }
+      })
+
+      if (foundMarker) {
+        // Unselect previous marker if any
+        if (selectedMarker.current && selectedMarker.current !== foundMarker) {
+          unselectMarker(selectedMarker.current)
+        }
+
+        // Select the found marker
+        selectMarker(foundMarker)
+        selectedMarker.current = foundMarker
+
+        // Center the map on the marker
+        const marker = foundMarker as mapboxgl.Marker
+        const lngLat = marker.getLngLat()
+        map.current?.panTo([lngLat.lng, lngLat.lat], {
+          duration: 1000,
+        })
+
+        // Notify parent component with precise coordinates - use non-null assertion since we've already checked it exists
+        onMarkerSelected?.({
+          lat: parseFloat(lngLat.lat.toFixed(6)),
+          lng: parseFloat(lngLat.lng.toFixed(6)),
+        })
+      }
+    }
+
     useImperativeHandle(ref, () => ({
       addMarker,
       setDate,
       clearMarkers,
       addMarkers,
       centerOnLocation,
+      selectMarkerAtLocation,
     }))
 
     useEffect(() => {

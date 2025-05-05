@@ -16,8 +16,10 @@ interface TopRatedPlacesProps {
   onPlaceSelect: (place: {
     geometry: { location: { lat: number; lng: number } }
     outdoorSeating: boolean
+    place_id: string
   }) => void
   onPlacesLoaded?: (places: PlaceResult[]) => void
+  selectedPlaceId?: string
 }
 
 interface PlaceWithPhoto extends PlaceResult {
@@ -28,10 +30,12 @@ const PlaceCard = ({
   place,
   onClick,
   dateTime,
+  isSelected,
 }: {
   place: PlaceWithPhoto
   onClick: () => void
   dateTime: Date
+  isSelected?: boolean
 }) => {
   const photoReference = place.photos?.[0]?.photo_reference
   const photoUrl = photoReference
@@ -48,52 +52,60 @@ const PlaceCard = ({
 
   return (
     <Card
-      className="overflow-hidden relative group cursor-pointer transition-all hover:ring-1 hover:shadow-md from-blue-500 h-64"
+      className={`overflow-hidden relative group cursor-pointer transition-all 
+        hover:ring-1 hover:shadow-md from-blue-500
+        ${isSelected ? "ring-2 ring-primary shadow-lg" : ""}`}
       onClick={onClick}
+      data-place-id={place.place_id}
+      data-place-lat={place.geometry.location.lat}
+      data-place-lng={place.geometry.location.lng}
     >
-      <div className="absolute inset-0 z-0">
-        {photoUrl && (
-          <>
-            {" "}
-            <Image
-              src={photoUrl}
-              alt={place.name}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority={false}
-            />
-            <div
-              className={`absolute inset-0 bg-gradient-to-t ${
-                hasSun
-                  ? "from-blue-500 from-10% via-35% via-blue-500/40"
-                  : "from-gray-700 from-10% via-35% via-gray-700/40"
-              }`}
-            />
-          </>
-        )}
-      </div>
-      <div className="relative z-10 flex flex-col h-full">
-        <CardHeader className="p-3 flex-1">
-          <div className="flex flex-col h-full justify-between">
-            <div></div>
-            <div className="flex justify-between items-end w-full">
-              <div>
-                <CardTitle className="text-base font-bold text-white transition-colors">
-                  {place.name}
-                </CardTitle>
-                <p className="text-xs text-blue-100 mt-0.5">{place.vicinity}</p>
-              </div>
-              <div className="min-w-4 min-h-4">
-                {hasSun ? (
-                  <Sun className="h-4 w-4 text-yellow-100" />
-                ) : (
-                  <Moon className="h-4 w-4 text-slate-400" />
-                )}
+      <AspectRatio ratio={1}>
+        <div className="absolute inset-0 z-0">
+          {photoUrl && (
+            <>
+              <Image
+                src={photoUrl}
+                alt={place.name}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                priority={false}
+              />
+              <div
+                className={`absolute inset-0 bg-gradient-to-t ${
+                  hasSun
+                    ? "from-blue-500 from-10% via-35% via-blue-500/40"
+                    : "from-gray-700 from-10% via-35% via-gray-700/40"
+                }`}
+              />
+            </>
+          )}
+        </div>
+        <div className="relative z-10 flex flex-col h-full">
+          <CardHeader className="p-3 flex-1">
+            <div className="flex flex-col h-full justify-between">
+              <div></div>
+              <div className="flex justify-between items-end w-full">
+                <div>
+                  <CardTitle className="text-base font-bold text-white transition-colors">
+                    {place.name}
+                  </CardTitle>
+                  <p className="text-xs text-blue-100 mt-0.5">
+                    {place.vicinity}
+                  </p>
+                </div>
+                <div className="min-w-4 min-h-4">
+                  {hasSun ? (
+                    <Sun className="h-4 w-4 text-yellow-100" />
+                  ) : (
+                    <Moon className="h-4 w-4 text-slate-400" />
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </CardHeader>
-      </div>
+          </CardHeader>
+        </div>
+      </AspectRatio>
     </Card>
   )
 }
@@ -103,12 +115,12 @@ export default function TopRatedPlaces({
   onPlaceSelect,
   onPlacesLoaded,
   dateTime,
+  selectedPlaceId,
 }: TopRatedPlacesProps) {
   const [places, setPlaces] = useState<PlaceWithPhoto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const prevLocationRef = useRef<{ lat: number; lng: number } | null>(null)
-  const isMobile = useIsMobile()
 
   const hasLocationChanged = () => {
     if (!prevLocationRef.current) return true
@@ -150,6 +162,14 @@ export default function TopRatedPlaces({
     fetchTopPlaces()
   }, [location, onPlacesLoaded])
 
+  const handlePlaceSelect = (place: PlaceWithPhoto) => {
+    onPlaceSelect({
+      geometry: place.geometry,
+      outdoorSeating: true,
+      place_id: place.place_id,
+    })
+  }
+
   if (loading) {
     return (
       <div className="p-4 text-muted-foreground">Loading top places...</div>
@@ -166,22 +186,14 @@ export default function TopRatedPlaces({
       {places.length === 0 ? (
         <p className="text-sm text-muted-foreground">No places found nearby</p>
       ) : (
-        <div
-          className={`grid grid-cols-2 gap-6 ${
-            isMobile ? "grid-cols-2" : "grid-cols-3"
-          }`}
-        >
+        <div className="grid gap-4 grid-cols-1 xs:grid-cols-2 md:grid-cols-3">
           {places.map((place) => (
             <PlaceCard
               key={place.place_id}
               place={place}
               dateTime={dateTime}
-              onClick={() =>
-                onPlaceSelect({
-                  geometry: place.geometry,
-                  outdoorSeating: true,
-                })
-              }
+              isSelected={place.place_id === selectedPlaceId}
+              onClick={() => handlePlaceSelect(place)}
             />
           ))}
         </div>
