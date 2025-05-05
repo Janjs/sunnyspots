@@ -7,7 +7,8 @@ import PlacesAutocomplete, {
   PlaceSelectData,
 } from "@/app/components/PlacesAutocomplete"
 import { DatePicker } from "@/app/components/DatePicker"
-import { TimeSlider } from "@/app/components/TimeSlider"
+import { TimeSlider, formatTimeFromDecimal } from "@/app/components/TimeSlider"
+import { TimePicker } from "@/app/components/TimePicker"
 import TopRatedPlaces from "@/app/components/TopRatedPlaces"
 import SunCalc from "suncalc"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
@@ -243,27 +244,40 @@ export default function MapUI() {
         )}
 
         {/* Date and time controls overlay at the bottom with glassmorphism */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg max-w-md w-full">
-          <div className="space-y-3">
-            <Label htmlFor="date-time" className="text-foreground font-medium">
-              Select date and time
-            </Label>
-            <div className="flex flex-col gap-2">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg w-4/5 max-w-3xl">
+          <div className="space-y-4">
+            <div className="flex flex-row items-center justify-between gap-4">
               <DatePicker date={currentDate} setDate={handleDateChange} />
-              <TimeSlider
-                sunriseHour={sunriseDecimal}
-                sunsetHour={sunsetDecimal}
+              <TimePicker
                 value={currentDate.getHours() + currentDate.getMinutes() / 60}
                 onChange={(h: number) => {
                   const updatedDateTime = new Date(currentDate)
                   const whole = Math.floor(h)
                   const mins = Math.round((h - whole) * 60)
-                  updatedDateTime.setHours(whole, mins)
+                  // Preserve the current date, only update hours and minutes
+                  const safeHour = Math.floor(h) % 24
+                  updatedDateTime.setHours(safeHour, mins, 0, 0)
                   setCurrentDate(updatedDateTime)
                   mapViewRef.current?.setDate(updatedDateTime)
                 }}
               />
             </div>
+            <TimeSlider
+              sunriseHour={sunriseDecimal}
+              sunsetHour={sunsetDecimal}
+              value={currentDate.getHours() + currentDate.getMinutes() / 60}
+              onChange={(h: number) => {
+                const updatedDateTime = new Date(currentDate)
+                const whole = Math.floor(h)
+                console.log("whole", whole)
+                const mins = Math.round((h - whole) * 60)
+                // Preserve the current date, only update hours and minutes
+                const safeHour = Math.floor(h) % 24
+                updatedDateTime.setHours(safeHour, mins, 0, 0)
+                setCurrentDate(updatedDateTime)
+                mapViewRef.current?.setDate(updatedDateTime)
+              }}
+            />
           </div>
         </div>
       </div>

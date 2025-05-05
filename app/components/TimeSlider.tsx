@@ -48,14 +48,18 @@ export function TimeSlider({
   // Gradient track: gray → day color → gray
   const trackBackground = `linear-gradient(to right, #e5e7eb 0%, #e5e7eb ${sunrisePos}%, #93c5fd ${sunrisePos}%, #93c5fd ${sunsetPos}%, #e5e7eb ${sunsetPos}%, #e5e7eb 100%)`
 
+  const handleTimeChange = (newValue: number) => {
+    // Only update the time without affecting the date
+    if (onChange) {
+      onChange(newValue)
+    } else {
+      setInternalHour(newValue)
+    }
+  }
+
   return (
     <div className={cn("w-full space-y-6", className)}>
-      <div className="flex justify-between">
-        <h3 className="text-sm font-medium">Time of Day</h3>
-        <span className="text-sm font-medium">{formatTime(hour)}</span>
-      </div>
-
-      <div className="relative mb-8">
+      <div className="relative">
         {/* Track background */}
         <div
           className="absolute top-1/2 h-2 w-full -translate-y-1/2 rounded-md"
@@ -71,8 +75,7 @@ export function TimeSlider({
           value={hour}
           onChange={(e) => {
             const newVal = parseFloat(e.target.value)
-            if (onChange) onChange(newVal)
-            else setInternalHour(newVal)
+            handleTimeChange(newVal)
           }}
           className="absolute z-10 h-2 w-full cursor-pointer opacity-0"
           style={{ top: "calc(50% - 1px)" }}
@@ -95,4 +98,13 @@ export function TimeSlider({
       </div>
     </div>
   )
+}
+
+// Utility function to format time
+export function formatTimeFromDecimal(decimal: number): string {
+  const h = Math.floor(decimal)
+  const m = Math.floor((decimal - h) * 60)
+  const ampm = h >= 12 ? "PM" : "AM"
+  const displayH = h % 12 || 12
+  return `${displayH}:${m.toString().padStart(2, "0")} ${ampm}`
 }

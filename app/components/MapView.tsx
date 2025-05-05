@@ -61,18 +61,12 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const selectedMarker = useRef<mapboxgl.Marker | null>(null)
 
     const createMarkerElement = (coordinates: Location) => {
-      console.log("[createMarkerElement] Creating element for:", coordinates)
-      console.log(
-        "[createMarkerElement] Current date ref:",
-        currentDate.current
-      )
       const el = document.createElement("div")
       const hasSun = hasSunlight(
         currentDate.current,
         coordinates.lat,
         coordinates.lng
       )
-      console.log("[createMarkerElement] Has sun:", hasSun)
 
       el.className = cn(
         buttonVariants({ variant: "secondary", size: "icon" }),
@@ -284,19 +278,10 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     }
 
     const setDate = (date: Date) => {
-      console.log("[setDate] Received new date:", date)
-      console.log("[setDate] Previous currentDate ref:", currentDate.current)
       currentDate.current = date
-      console.log("[setDate] Updated currentDate ref:", currentDate.current)
       if (shadeMap.current) {
-        console.log("[setDate] Updating ShadeMap date.")
         shadeMap.current.setDate(date)
       }
-      // Update all existing markers to reflect new sunlight status
-      console.log(
-        `[setDate] Clearing and re-adding ${markers.current.length} markers (deferred).`
-      )
-
       // Defer marker updates to avoid conflict with ShadeMap update
       setTimeout(() => {
         const existingMarkers = markers.current
@@ -313,17 +298,12 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
         existingMarkers.forEach((marker, index) => {
           const coordinates = marker.getLngLat()
-          console.log(
-            `[setDate] Re-creating marker ${index} for coords:`,
-            coordinates
-          )
 
           const newElement = createMarkerElement({
             lat: coordinates.lat,
             lng: coordinates.lng,
           })
 
-          console.log(`[setDate] Creating new mapboxgl.Marker ${index}`)
           const newMarker = new mapboxgl.Marker({ element: newElement })
             .setLngLat([coordinates.lng, coordinates.lat])
             .addTo(map.current!)
@@ -346,7 +326,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             }
           })
 
-          console.log(`[setDate] Pushing new marker ${index} to ref array.`)
           markers.current.push(newMarker)
 
           // Check if this was the previously selected marker
@@ -359,10 +338,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             selectedMarker.current = newMarker
           }
 
-          console.log(`[setDate] Removing old marker ${index}`)
           marker.remove()
         })
-        console.log("[setDate] Finished re-adding markers.")
       }, 0)
     }
 
