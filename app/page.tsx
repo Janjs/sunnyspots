@@ -46,9 +46,11 @@ export default function MapUI() {
     return new Date() // 1 hour after sunrise: times.sunrise.getTime() + 60 * 60 * 1000
   })
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>()
+  const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null)
   const [coordinatesPlaceIdMap, setCoordinatesPlaceIdMap] = useState<
     Map<string, string>
   >(new Map())
+  const [placesData, setPlacesData] = useState<PlaceResult[]>([])
   const mapViewRef = useRef<MapViewRef | null>(null)
 
   const handlePlaceSelect = (place: PlaceSelectData) => {
@@ -64,6 +66,7 @@ export default function MapUI() {
 
       // Unselect any selected place
       setSelectedPlaceId(undefined)
+      setSelectedPlace(null)
     }
   }
 
@@ -98,6 +101,12 @@ export default function MapUI() {
     // selectMarkerAtLocation now handles centering
     mapViewRef.current?.selectMarkerAtLocation(coordinates)
     setSelectedPlaceId(place.place_id)
+
+    // Find the full place data from our cached places
+    if (place.place_id) {
+      const fullPlace = placesData.find((p) => p.place_id === place.place_id)
+      setSelectedPlace(fullPlace || null)
+    }
   }
 
   const handleMarkerSelected = (
@@ -107,6 +116,10 @@ export default function MapUI() {
       // If place_id is directly available from the marker, use it
       if (coordinates.place_id) {
         setSelectedPlaceId(coordinates.place_id)
+        const fullPlace = placesData.find(
+          (p) => p.place_id === coordinates.place_id
+        )
+        setSelectedPlace(fullPlace || null)
         return
       }
 
@@ -117,12 +130,23 @@ export default function MapUI() {
 
       const placeId = coordinatesPlaceIdMap.get(coordKey)
       setSelectedPlaceId(placeId)
+
+      if (placeId) {
+        const fullPlace = placesData.find((p) => p.place_id === placeId)
+        setSelectedPlace(fullPlace || null)
+      } else {
+        setSelectedPlace(null)
+      }
     } else {
       setSelectedPlaceId(undefined)
+      setSelectedPlace(null)
     }
   }
 
   const handlePlacesLoaded = (places: PlaceResult[]) => {
+    // Store the full places data for later reference
+    setPlacesData(places)
+
     // Create mappings between coordinates and place IDs
     const newCoordinatesPlaceIdMap = new Map<string, string>()
 
@@ -153,8 +177,56 @@ export default function MapUI() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      {/* Map container on the right */}
-      <div className="relative flex-1  bg-background">
+      {/* Left sidebar with search and top rated places */}
+      <div className="w-1/2 flex-shrink-0 bg-background overflow-y-auto">
+        <div className="flex-col gap-4 p-6">
+          <h1 className="text-xl font-semibold text-foreground mb-4">
+            Sunny spots in Utrecht
+          </h1>
+
+          <div className="space-y-2">
+            <PlacesAutocomplete
+              onPlaceSelect={handlePlaceSelect}
+              defaultLocation={DEFAULT_LOCATION}
+            />
+          </div>
+
+          <div className="mt-4">
+            <TopRatedPlaces
+              location={currentLocation}
+              dateTime={currentDate}
+              onPlaceSelect={handlePlaceFromListSelect}
+              onPlacesLoaded={handlePlacesLoaded}
+              selectedPlaceId={selectedPlaceId}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Map container on the right with overlays */}
+      <div className="relative flex-1 bg-background">
+        {/* Selected place overlay at the top with glassmorphism */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-2 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+          {selectedPlace ? (
+            <div className="text-foreground">
+              <h2 className="text-lg font-semibold">{selectedPlace.name}</h2>
+              {selectedPlace.rating && (
+                <div className="flex items-center gap-1 text-sm">
+                  <span>Rating: {selectedPlace.rating}</span>
+                  {selectedPlace.user_ratings_total && (
+                    <span>({selectedPlace.user_ratings_total} reviews)</span>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-sm text-foreground/70 italic">
+              Select a place to see details
+            </div>
+          )}
+        </div>
+
+        {/* MapView component */}
         <MapView
           ref={mapViewRef}
           onLoadingProgress={setLoadingPercentage}
@@ -162,26 +234,18 @@ export default function MapUI() {
           initialDate={currentDate}
           onMarkerSelected={handleMarkerSelected}
         />
-      </div>
-      {/* Left sidebar with controls */}
-      <div className="flex-1 flex justify-center">
-        <div className="min-w-full flex-col gap-4 bg-background p-6 overflow-y-auto">
-          <h2 className="text-xl font-semibold text-foreground">
-            Find sunny terraces in Utrecht
-          </h2>
 
-          <div className="space-y-2">
-            <Label htmlFor="place-search" className="text-foreground">
-              Search location
-            </Label>
-            <PlacesAutocomplete
-              onPlaceSelect={handlePlaceSelect}
-              defaultLocation={DEFAULT_LOCATION}
-            />
+        {/* Loading indicator overlay */}
+        {loadingPercentage > 0 && loadingPercentage < 100 && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
+            Loading map: {loadingPercentage}%
           </div>
+        )}
 
-          <div className="space-y-2">
-            <Label htmlFor="date-time" className="text-foreground">
+        {/* Date and time controls overlay at the bottom with glassmorphism */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg max-w-md w-full">
+          <div className="space-y-3">
+            <Label htmlFor="date-time" className="text-foreground font-medium">
               Select date and time
             </Label>
             <div className="flex flex-col gap-2">
@@ -200,22 +264,6 @@ export default function MapUI() {
                 }}
               />
             </div>
-          </div>
-
-          {loadingPercentage > 0 && loadingPercentage < 100 && (
-            <div className="mt-4 rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
-              Loading map: {loadingPercentage}%
-            </div>
-          )}
-
-          <div className="mt-2">
-            <TopRatedPlaces
-              location={currentLocation}
-              dateTime={currentDate}
-              onPlaceSelect={handlePlaceFromListSelect}
-              onPlacesLoaded={handlePlacesLoaded}
-              selectedPlaceId={selectedPlaceId}
-            />
           </div>
         </div>
       </div>

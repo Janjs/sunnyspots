@@ -181,8 +181,7 @@ export default function TopRatedPlaces({
   }
 
   return (
-    <div className="space-y-3">
-      <h3 className="font-medium text-foreground">Top Rated Outdoor Places</h3>
+    <div>
       {places.length === 0 ? (
         <p className="text-sm text-muted-foreground">No places found nearby</p>
       ) : (
