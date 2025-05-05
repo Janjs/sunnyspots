@@ -48,7 +48,7 @@ export function TimePicker({ value, onChange }: TimePickerProps) {
         <Button
           variant={"outline"}
           className={cn(
-            "w-fit justify-start text-left font-normal border-input bg-background hover:bg-accent hover:text-accent-foreground"
+            "w-fit justify-start text-left font-normal bg-white/25 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/30"
           )}
         >
           <ClockIcon className="mr-2 h-4 w-4 text-foreground" />
@@ -56,7 +56,7 @@ export function TimePicker({ value, onChange }: TimePickerProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-fit p-4 border border-border shadow-md"
+        className="w-fit p-4 bg-white/25 backdrop-blur-md border border-white/20 shadow-md"
         align="center"
         side="top"
       >
@@ -93,13 +93,11 @@ export function TimePicker({ value, onChange }: TimePickerProps) {
                   <SelectValue placeholder="Minute" />
                 </SelectTrigger>
                 <SelectContent>
-                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map(
-                    (minute) => (
-                      <SelectItem key={minute} value={String(minute)}>
-                        {minute.toString().padStart(2, "0")}
-                      </SelectItem>
-                    )
-                  )}
+                  {[0, 30].map((minute) => (
+                    <SelectItem key={minute} value={String(minute)}>
+                      {minute.toString().padStart(2, "0")}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
