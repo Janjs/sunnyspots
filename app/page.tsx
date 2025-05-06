@@ -12,6 +12,8 @@ import { TimePicker } from "@/app/components/TimePicker"
 import TopRatedPlaces from "@/app/components/TopRatedPlaces"
 import SunCalc from "suncalc"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
+import CityTitle from "@/app/components/CityTitle"
+import EditCityModal from "@/app/components/EditCityModal"
 
 // Extend PlaceResult for our needs
 interface ExtendedPlaceResult extends PlaceResult {
@@ -43,6 +45,7 @@ interface MapViewRef {
 export default function MapUI() {
   const [loadingPercentage, setLoadingPercentage] = useState(0)
   const [currentLocation, setCurrentLocation] = useState(DEFAULT_LOCATION)
+  const [currentCity, setCurrentCity] = useState("Utrecht")
   const [currentDate, setCurrentDate] = useState(() => {
     return new Date() // 1 hour after sunrise: times.sunrise.getTime() + 60 * 60 * 1000
   })
@@ -53,8 +56,11 @@ export default function MapUI() {
   >(new Map())
   const [placesData, setPlacesData] = useState<PlaceResult[]>([])
   const mapViewRef = useRef<MapViewRef | null>(null)
+  const [isEditCityModalOpen, setIsEditCityModalOpen] = useState(false)
 
-  const handlePlaceSelect = (place: PlaceSelectData) => {
+  const handlePlaceSelect = (
+    place: PlaceSelectData & { address_components?: any[] }
+  ) => {
     if (place.geometry?.location) {
       const coordinates = {
         lng: place.geometry.location.lng,
@@ -68,7 +74,24 @@ export default function MapUI() {
       // Unselect any selected place
       setSelectedPlaceId(undefined)
       setSelectedPlace(null)
+
+      // Extract and set city
+      if (place.address_components) {
+        const cityComponent = place.address_components.find((component) =>
+          component.types.includes("locality")
+        )
+        if (cityComponent) {
+          setCurrentCity(cityComponent.long_name)
+        }
+      }
     }
+  }
+
+  const handleCityNameChange = (newCity: string) => {
+    setCurrentCity(newCity)
+    // Potentially, you might want to clear current location or search results
+    // if the city is manually changed, as the existing results might be for the old city.
+    // For now, just updating the city name.
   }
 
   const handleDateChange = (selectedDate: Date | undefined) => {
@@ -176,14 +199,29 @@ export default function MapUI() {
     times.sunrise.getHours() + times.sunrise.getMinutes() / 60
   const sunsetDecimal = times.sunset.getHours() + times.sunset.getMinutes() / 60
 
+  const openEditCityModal = () => setIsEditCityModalOpen(true)
+  const closeEditCityModal = () => setIsEditCityModalOpen(false)
+
+  const handleSaveCity = (newCity: string) => {
+    if (newCity.trim() !== "") {
+      setCurrentCity(newCity.trim())
+      // Consider clearing location-specific data if the city changes significantly
+      // For example:
+      // mapViewRef.current?.clearMarkers()
+      // setPlacesData([])
+      // setCurrentLocation(DEFAULT_LOCATION) // Or try to geocode newCity
+      // setSelectedPlace(null)
+      // setSelectedPlaceId(undefined)
+    }
+    closeEditCityModal()
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Left sidebar with search and top rated places */}
       <div className="w-1/2 flex-shrink-0 bg-background overflow-y-auto">
         <div className="flex-col gap-4 p-6">
-          <h1 className="text-xl font-semibold text-foreground mb-4">
-            Sunny spots in Utrecht
-          </h1>
+          <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
 
           <div className="space-y-2">
             <PlacesAutocomplete
@@ -281,6 +319,13 @@ export default function MapUI() {
           </div>
         </div>
       </div>
+      <EditCityModal
+        isOpen={isEditCityModalOpen}
+        currentCity={currentCity}
+        onClose={closeEditCityModal}
+        onSave={handleSaveCity}
+        placeholder="Enter city name e.g. Amsterdam"
+      />
     </div>
   )
 }
