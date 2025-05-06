@@ -60,6 +60,17 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const currentDate = useRef<Date>(initialDate)
     const selectedMarker = useRef<mapboxgl.Marker | null>(null)
 
+    useEffect(() => {
+      if (map.current) {
+        map.current.flyTo({
+          center: [defaultLocation.lng, defaultLocation.lat],
+          zoom: 15, // Or current zoom level if you want to preserve it
+          essential: true,
+          duration: 1500,
+        })
+      }
+    }, [defaultLocation]) // Re-run effect when defaultLocation changes
+
     const createMarkerElement = (coordinates: Location) => {
       const el = document.createElement("div")
       const hasSun = hasSunlight(
@@ -528,7 +539,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           map.current = null
         }
       }
-    }, [onLoadingProgress, defaultLocation])
+    }, [onLoadingProgress])
 
     // Update ShadeMap and markers when initialDate prop changes, without reinitializing the map
     useEffect(() => {

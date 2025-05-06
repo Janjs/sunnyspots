@@ -25,14 +25,12 @@ interface CityAutocompleteProps {
   ) => void
   initialValue?: string
   placeholder?: string
-  currentLocationForBias?: { lat: number; lng: number }
 }
 
 export default function CityAutocomplete({
   onCitySelect,
   initialValue = "",
   placeholder = "Search city...",
-  currentLocationForBias,
 }: CityAutocompleteProps) {
   const [inputValue, setInputValue] = useState(initialValue)
   const [suggestions, setSuggestions] = useState<CitySuggestion[]>([])
@@ -70,10 +68,7 @@ export default function CityAutocomplete({
 
     debounceTimeoutRef.current = setTimeout(async () => {
       try {
-        const citySuggestions = await fetchCitySuggestions(
-          value,
-          currentLocationForBias
-        )
+        const citySuggestions = await fetchCitySuggestions(value)
         setSuggestions(citySuggestions)
       } catch (error) {
         console.error("Error fetching city suggestions:", error)

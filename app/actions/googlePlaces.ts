@@ -30,10 +30,8 @@ export async function fetchPlaceSuggestions(
         radius: 5000,
       },
     },
-    includedRegionCodes: ["nl"],
     includedPrimaryTypes: types, // Use passed types
     languageCode: "en-US",
-    regionCode: "nl",
   }
   console.log(
     `[Places API] Fetching suggestions for query: "${query}" at location: ${
@@ -240,7 +238,6 @@ export async function fetchCitySuggestions(
   const startTime = Date.now()
   const body: any = {
     input: query,
-    includedRegionCodes: ["nl"], // Bias towards Netherlands, can be made dynamic
     languageCode: "en-US",
     // Reverting to array based on common usage for (cities) type collection with v1 endpoint
     // The new API might still use `types` for these broad collections, and an array is typical for multi-value params.
