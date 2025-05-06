@@ -15,7 +15,8 @@ const wasResponseCached = (responseTime: number) => responseTime < 20 // If resp
 
 export async function fetchPlaceSuggestions(
   query: string,
-  location: { lat: number; lng: number }
+  location: { lat: number; lng: number },
+  types: string[] = ["restaurant", "bar"] // Allow types to be passed
 ): Promise<Place[]> {
   const startTime = Date.now()
   const body = {
@@ -30,10 +31,14 @@ export async function fetchPlaceSuggestions(
       },
     },
     includedRegionCodes: ["nl"],
-    includedPrimaryTypes: ["restaurant", "bar"],
+    includedPrimaryTypes: types, // Use passed types
+    languageCode: "en-US",
+    regionCode: "nl",
   }
   console.log(
-    `[Places API] Fetching suggestions for query: "${query}" at location: ${location.lat},${location.lng}`
+    `[Places API] Fetching suggestions for query: "${query}" at location: ${
+      location.lat
+    },${location.lng} with types: ${types.join(",")}`
   )
   const response = await fetch(`${placesApiUrl}:autocomplete`, {
     method: "POST",
@@ -207,4 +212,72 @@ export async function getPlacePhotoUrl(
   const base64Image = buffer.toString("base64")
   const contentType = response.headers.get("content-type") || "image/jpeg"
   return `data:${contentType};base64,${base64Image}`
+}
+
+// Add new interface for CitySuggestion
+export interface CitySuggestion {
+  placePrediction: {
+    placeId: string
+    text: {
+      text: string // Full city name, e.g., "Amsterdam, Netherlands"
+    }
+    structuredFormat: {
+      mainText: {
+        text: string // e.g., "Amsterdam"
+      }
+      secondaryText?: {
+        text: string // e.g., "Netherlands"
+      }
+    }
+  }
+}
+
+// New function to fetch city suggestions
+export async function fetchCitySuggestions(
+  query: string,
+  location?: { lat: number; lng: number } // Optional location for bias
+): Promise<CitySuggestion[]> {
+  const startTime = Date.now()
+  const body: any = {
+    input: query,
+    includedRegionCodes: ["nl"], // Bias towards Netherlands, can be made dynamic
+    languageCode: "en-US",
+    types: ["(cities)"], // Specifically search for cities/towns
+  }
+
+  if (location) {
+    body.locationBias = {
+      circle: {
+        center: {
+          latitude: location.lat,
+          longitude: location.lng,
+        },
+        radius: 100000, // Larger radius for city search bias
+      },
+    }
+  }
+  console.log(
+    `[Places API] Fetching city suggestions for query: "${query}"${
+      location ? ` biased around: ${location.lat},${location.lng}` : ""
+    }`
+  )
+  const response = await fetch(`${placesApiUrl}:autocomplete`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": GOOGLE_API_KEY as string,
+    },
+    body: JSON.stringify(body),
+    next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+  })
+  const endTime = Date.now()
+  const responseTime = endTime - startTime
+  console.log(
+    `[Places API] City suggestions request completed in ${responseTime}ms (${
+      wasResponseCached(responseTime) ? "CACHE HIT" : "CACHE MISS"
+    })`
+  )
+
+  const data = await response.json()
+  return data.suggestions ? (data.suggestions as CitySuggestion[]) : []
 }

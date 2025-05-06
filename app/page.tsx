@@ -12,6 +12,7 @@ import { TimePicker } from "@/app/components/TimePicker"
 import TopRatedPlaces from "@/app/components/TopRatedPlaces"
 import SunCalc from "suncalc"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
+import { fetchPlaceDetails } from "@/actions/googlePlaces"
 import CityTitle from "@/app/components/CityTitle"
 import EditCityModal from "@/app/components/EditCityModal"
 
@@ -46,9 +47,7 @@ export default function MapUI() {
   const [loadingPercentage, setLoadingPercentage] = useState(0)
   const [currentLocation, setCurrentLocation] = useState(DEFAULT_LOCATION)
   const [currentCity, setCurrentCity] = useState("Utrecht")
-  const [currentDate, setCurrentDate] = useState(() => {
-    return new Date() // 1 hour after sunrise: times.sunrise.getTime() + 60 * 60 * 1000
-  })
+  const [currentDate, setCurrentDate] = useState(() => new Date())
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>()
   const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null)
   const [coordinatesPlaceIdMap, setCoordinatesPlaceIdMap] = useState<
@@ -66,16 +65,10 @@ export default function MapUI() {
         lng: place.geometry.location.lng,
         lat: place.geometry.location.lat,
       }
-      // Update current location for the top rated venues component
       setCurrentLocation(coordinates)
-      // Add marker using the ref
       mapViewRef.current?.addMarker(coordinates, place.outdoorSeating)
-
-      // Unselect any selected place
       setSelectedPlaceId(undefined)
       setSelectedPlace(null)
-
-      // Extract and set city
       if (place.address_components) {
         const cityComponent = place.address_components.find((component) =>
           component.types.includes("locality")
@@ -96,21 +89,15 @@ export default function MapUI() {
 
   const handleDateChange = (selectedDate: Date | undefined) => {
     if (selectedDate) {
-      // Create a new date object based on the existing state
       const updatedDateTime = new Date(currentDate)
-
-      // Update only the year, month, and day from the selected date
       updatedDateTime.setFullYear(
         selectedDate.getFullYear(),
         selectedDate.getMonth(),
         selectedDate.getDate()
       )
-
-      // Update the state with the combined date and time
       setCurrentDate(updatedDateTime)
       mapViewRef.current?.setDate(updatedDateTime)
     }
-    // If selectedDate is undefined, do nothing, keep the current date & time
   }
 
   const handlePlaceFromListSelect = (place: {
@@ -122,11 +109,8 @@ export default function MapUI() {
       lat: place.geometry.location.lat,
       lng: place.geometry.location.lng,
     }
-    // selectMarkerAtLocation now handles centering
     mapViewRef.current?.selectMarkerAtLocation(coordinates)
     setSelectedPlaceId(place.place_id)
-
-    // Find the full place data from our cached places
     if (place.place_id) {
       const fullPlace = placesData.find((p) => p.place_id === place.place_id)
       setSelectedPlace(fullPlace || null)
@@ -137,7 +121,6 @@ export default function MapUI() {
     coordinates: { lat: number; lng: number; place_id?: string } | null
   ) => {
     if (coordinates) {
-      // If place_id is directly available from the marker, use it
       if (coordinates.place_id) {
         setSelectedPlaceId(coordinates.place_id)
         const fullPlace = placesData.find(
@@ -146,15 +129,11 @@ export default function MapUI() {
         setSelectedPlace(fullPlace || null)
         return
       }
-
-      // Otherwise, try to look it up from the coordinates map
       const coordKey = `${coordinates.lat.toFixed(6)},${coordinates.lng.toFixed(
         6
       )}`
-
       const placeId = coordinatesPlaceIdMap.get(coordKey)
       setSelectedPlaceId(placeId)
-
       if (placeId) {
         const fullPlace = placesData.find((p) => p.place_id === placeId)
         setSelectedPlace(fullPlace || null)
@@ -168,28 +147,22 @@ export default function MapUI() {
   }
 
   const handlePlacesLoaded = (places: PlaceResult[]) => {
-    // Store the full places data for later reference
     setPlacesData(places)
-
-    // Create mappings between coordinates and place IDs
     const newCoordinatesPlaceIdMap = new Map<string, string>()
-
     places.forEach((place) => {
       const coords = place.geometry.location
       const coordKey = `${coords.lat.toFixed(6)},${coords.lng.toFixed(6)}`
       newCoordinatesPlaceIdMap.set(coordKey, place.place_id)
     })
     setCoordinatesPlaceIdMap(newCoordinatesPlaceIdMap)
-
     const placesWithOutdoorSeating = places.map((place) => ({
       geometry: place.geometry,
       outdoorSeating: true,
-      place_id: place.place_id, // Pass place_id to ensure it's available in marker data
+      place_id: place.place_id,
     }))
     mapViewRef.current?.addMarkers(placesWithOutdoorSeating)
   }
 
-  // Compute sunrise/sunset for current date & location
   const times = SunCalc.getTimes(
     currentDate,
     currentLocation.lat,
@@ -202,34 +175,66 @@ export default function MapUI() {
   const openEditCityModal = () => setIsEditCityModalOpen(true)
   const closeEditCityModal = () => setIsEditCityModalOpen(false)
 
-  const handleSaveCity = (newCity: string) => {
-    if (newCity.trim() !== "") {
-      setCurrentCity(newCity.trim())
-      // Consider clearing location-specific data if the city changes significantly
-      // For example:
-      // mapViewRef.current?.clearMarkers()
-      // setPlacesData([])
-      // setCurrentLocation(DEFAULT_LOCATION) // Or try to geocode newCity
-      // setSelectedPlace(null)
-      // setSelectedPlaceId(undefined)
+  const handleSaveCity = async (newCityData: {
+    name: string
+    placeId?: string
+  }) => {
+    const newCityName = newCityData.name.trim()
+    if (newCityName) {
+      setCurrentCity(newCityName)
+
+      mapViewRef.current?.clearMarkers()
+      setPlacesData([])
+      setSelectedPlace(null)
+      setSelectedPlaceId(undefined)
+
+      if (newCityData.placeId) {
+        try {
+          const placeDetails = await fetchPlaceDetails(newCityData.placeId)
+          if (placeDetails.geometry && placeDetails.geometry.location) {
+            const newCoords = {
+              lat: placeDetails.geometry.location.lat,
+              lng: placeDetails.geometry.location.lng,
+            }
+            setCurrentLocation(newCoords)
+            mapViewRef.current?.centerOnLocation(newCoords)
+          } else {
+            console.warn(
+              "New city selected from autocomplete lacked geometry. Resetting location."
+            )
+            setCurrentLocation(DEFAULT_LOCATION)
+            mapViewRef.current?.centerOnLocation(DEFAULT_LOCATION)
+          }
+        } catch (error) {
+          console.error(
+            "Error fetching place details for new city, resetting location:",
+            error
+          )
+          setCurrentLocation(DEFAULT_LOCATION)
+          mapViewRef.current?.centerOnLocation(DEFAULT_LOCATION)
+        }
+      } else {
+        console.warn(
+          "New city typed manually. Map location reset to default. Consider implementing name-based geocoding."
+        )
+        setCurrentLocation(DEFAULT_LOCATION)
+        mapViewRef.current?.centerOnLocation(DEFAULT_LOCATION)
+      }
     }
     closeEditCityModal()
   }
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
-      {/* Left sidebar with search and top rated places */}
       <div className="w-1/2 flex-shrink-0 bg-background overflow-y-auto">
         <div className="flex-col gap-4 p-6">
           <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
-
           <div className="space-y-2">
             <PlacesAutocomplete
               onPlaceSelect={handlePlaceSelect}
               defaultLocation={DEFAULT_LOCATION}
             />
           </div>
-
           <div className="mt-4">
             <TopRatedPlaces
               location={currentLocation}
@@ -241,10 +246,7 @@ export default function MapUI() {
           </div>
         </div>
       </div>
-
-      {/* Map container on the right with overlays */}
       <div className="relative flex-1 bg-background">
-        {/* Selected place overlay at the top with glassmorphism */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-2 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
           {selectedPlace ? (
             <div className="text-foreground">
@@ -264,24 +266,18 @@ export default function MapUI() {
             </div>
           )}
         </div>
-
-        {/* MapView component */}
         <MapView
           ref={mapViewRef}
           onLoadingProgress={setLoadingPercentage}
-          defaultLocation={DEFAULT_LOCATION}
+          defaultLocation={currentLocation}
           initialDate={currentDate}
           onMarkerSelected={handleMarkerSelected}
         />
-
-        {/* Loading indicator overlay */}
         {loadingPercentage > 0 && loadingPercentage < 100 && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
             Loading map: {loadingPercentage}%
           </div>
         )}
-
-        {/* Date and time controls overlay at the bottom with glassmorphism */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg w-4/5 max-w-3xl">
           <div className="space-y-4">
             <div className="flex flex-row items-center justify-between gap-4">
@@ -292,7 +288,6 @@ export default function MapUI() {
                   const updatedDateTime = new Date(currentDate)
                   const whole = Math.floor(h)
                   const mins = Math.round((h - whole) * 60)
-                  // Preserve the current date, only update hours and minutes
                   const safeHour = Math.floor(h) % 24
                   updatedDateTime.setHours(safeHour, mins, 0, 0)
                   setCurrentDate(updatedDateTime)
@@ -309,7 +304,6 @@ export default function MapUI() {
                 const whole = Math.floor(h)
                 console.log("whole", whole)
                 const mins = Math.round((h - whole) * 60)
-                // Preserve the current date, only update hours and minutes
                 const safeHour = Math.floor(h) % 24
                 updatedDateTime.setHours(safeHour, mins, 0, 0)
                 setCurrentDate(updatedDateTime)
@@ -325,6 +319,7 @@ export default function MapUI() {
         onClose={closeEditCityModal}
         onSave={handleSaveCity}
         placeholder="Enter city name e.g. Amsterdam"
+        currentLocationForBias={currentLocation}
       />
     </div>
   )

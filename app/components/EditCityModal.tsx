@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -10,15 +10,22 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import CityAutocomplete from "./CityAutocomplete"
+
+interface SelectedCityData {
+  name: string
+  fullName: string
+  placeId: string
+}
 
 interface EditCityModalProps {
   isOpen: boolean
   currentCity: string
   onClose: () => void
-  onSave: (newCity: string) => void
+  onSave: (newCityData: { name: string; placeId?: string }) => void
   placeholder?: string
+  currentLocationForBias?: { lat: number; lng: number }
 }
 
 export default function EditCityModal({
@@ -26,39 +33,46 @@ export default function EditCityModal({
   currentCity,
   onClose,
   onSave,
-  placeholder = "Enter city name",
+  placeholder = "Enter or search city name",
+  currentLocationForBias,
 }: EditCityModalProps) {
-  const [editedCity, setEditedCity] = useState(currentCity)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [selectedCity, setSelectedCity] = useState<SelectedCityData | null>(
+    null
+  )
+  const [inputValue, setInputValue] = useState(currentCity)
+  const [isCitySelectedFromList, setIsCitySelectedFromList] = useState(false)
 
   useEffect(() => {
-    setEditedCity(currentCity)
-    if (isOpen && inputRef.current) {
-      // Focus and select text when modal opens and currentCity is set
-      setTimeout(() => {
-        // Timeout to ensure focus works after dialog is fully rendered
-        inputRef.current?.focus()
-        inputRef.current?.select()
-      }, 100)
+    if (isOpen) {
+      setInputValue(currentCity)
+      setSelectedCity(null)
+      setIsCitySelectedFromList(false)
+    } else {
+      setInputValue("")
+      setSelectedCity(null)
+      setIsCitySelectedFromList(false)
     }
   }, [currentCity, isOpen])
 
-  const handleSave = () => {
-    if (editedCity.trim()) {
-      onSave(editedCity.trim())
+  const handleCitySelectFromAutocomplete = (
+    citySelection: SelectedCityData | null
+  ) => {
+    setSelectedCity(citySelection)
+    if (citySelection) {
+      setInputValue(citySelection.name)
+      setIsCitySelectedFromList(true)
     } else {
-      onSave(currentCity) // If empty, save the original city or handle as error
+      setIsCitySelectedFromList(false)
     }
-    // onClose(); // The onSave handler in page.tsx will typically close the modal
   }
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedCity(event.target.value)
-  }
-
-  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      handleSave()
+  const handleSave = () => {
+    if (isCitySelectedFromList && selectedCity && selectedCity.name.trim()) {
+      onSave({ name: selectedCity.name.trim(), placeId: selectedCity.placeId })
+    } else if (inputValue.trim()) {
+      onSave({ name: inputValue.trim() })
+    } else {
+      onSave({ name: currentCity })
     }
   }
 
@@ -67,27 +81,27 @@ export default function EditCityModal({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit City Name</DialogTitle>
-          <DialogDescription>
-            Update the city you want to find sunny spots in.
-          </DialogDescription>
+          <DialogDescription>Search for a new city or town.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <Input
-            ref={inputRef}
-            id="cityName"
-            value={editedCity}
-            onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
+          <CityAutocomplete
+            initialValue={inputValue}
+            onCitySelect={handleCitySelectFromAutocomplete}
             placeholder={placeholder}
+            currentLocationForBias={currentLocationForBias}
           />
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button type="button" variant="outline">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
           </DialogClose>
-          <Button type="button" onClick={handleSave}>
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={!inputValue.trim() && !currentCity}
+          >
             Save Changes
           </Button>
         </DialogFooter>

@@ -34,7 +34,7 @@ export default function CityTitle({
         <button
           onClick={onEditRequest}
           aria-label="Edit city name"
-          className="ml-2 p-1 rounded-md hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-all duration-150 focus:opacity-100"
+          className="ml-1 p-1 rounded-md hover:bg-accent hover:text-accent-foreground opacity-0 group-hover:opacity-100 transition-all duration-150 focus:opacity-100"
         >
           <Pencil size={18} />
         </button>
