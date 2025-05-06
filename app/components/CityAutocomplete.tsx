@@ -100,51 +100,45 @@ export default function CityAutocomplete({
   }
 
   const showCommandList =
-    inputValue.trim().length > 0 && (isLoading || suggestions.length > 0)
+    inputValue.trim().length > 0 && suggestions.length > 0 && !isLoading
 
   return (
-    <Command className="relative w-full bg-background border border-input rounded-md overflow-visible">
-      <div className="flex items-center px-3" cmdk-input-wrapper="">
-        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-        <CommandPrimitive.Input
-          ref={inputRef}
-          value={inputValue}
-          onValueChange={handleInputChange}
-          placeholder={placeholder}
-          className={cn(
-            "flex h-9 w-full rounded-md bg-transparent py-2 text-sm outline-none appearance-none",
-            "placeholder:text-muted-foreground text-foreground",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-            "border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
-          )}
-        />
-      </div>
-
-      {isLoading && (
-        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-          <Loader2 className="h-4 w-4 animate-spin" />
+    <div>
+      <Command className="relative bg-background border border-input rounded-md overflow-visible">
+        <div className="flex items-center px-3" cmdk-input-wrapper="">
+          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <CommandPrimitive.Input
+            ref={inputRef}
+            value={inputValue}
+            onValueChange={handleInputChange}
+            placeholder={placeholder}
+            className={cn(
+              "flex h-9 w-full rounded-md bg-transparent py-2 text-sm outline-none appearance-none",
+              "placeholder:text-muted-foreground text-foreground",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              "border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
+            )}
+          />
         </div>
-      )}
 
-      {showCommandList && (
-        <CommandList className="absolute top-full mt-1 w-full bg-popover border border-input rounded-md shadow-lg z-50">
-          {isLoading && suggestions.length === 0 && (
-            <CommandItem
-              disabled
-              className="text-muted-foreground justify-center"
-            >
-              Loading...
-            </CommandItem>
-          )}
+        {isLoading && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        )}
 
-          {!isLoading && suggestions.length > 0 && (
+        {showCommandList && (
+          <CommandList className="bg-popover">
+            <CommandEmpty className="text-muted-foreground">
+              No cities found.
+            </CommandEmpty>
             <CommandGroup>
               {suggestions.map((suggestion) => (
                 <CommandItem
                   key={suggestion.placePrediction.placeId}
                   value={suggestion.placePrediction.text.text}
                   onSelect={() => handleSelectSuggestion(suggestion)}
-                  className="text-popover-foreground hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                  className="text-popover-foreground hover:bg-accent hover:text-accent-foreground"
                 >
                   <Check
                     className={cn(
@@ -161,7 +155,7 @@ export default function CityAutocomplete({
                   </span>
                   {suggestion.placePrediction.structuredFormat
                     .secondaryText && (
-                    <span className="ml-2 text-xs text-muted-foreground">
+                    <span className="ml-2 text-muted-foreground">
                       {
                         suggestion.placePrediction.structuredFormat
                           .secondaryText.text
@@ -171,9 +165,9 @@ export default function CityAutocomplete({
                 </CommandItem>
               ))}
             </CommandGroup>
-          )}
-        </CommandList>
-      )}
-    </Command>
+          </CommandList>
+        )}
+      </Command>
+    </div>
   )
 }
