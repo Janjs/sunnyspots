@@ -1,11 +1,11 @@
-import { useState } from "react"
-import { Check } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Check, Loader2, Search } from "lucide-react"
+import { Command as CommandPrimitive } from "cmdk"
 import { cn } from "@/lib/utils"
 import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
@@ -13,6 +13,8 @@ import {
   fetchPlaceSuggestions,
   fetchPlaceDetails,
 } from "@/actions/googlePlaces"
+
+const DEBOUNCE_DELAY = 300
 
 interface Location {
   lat: number
@@ -51,28 +53,61 @@ export default function PlacesAutocomplete({
 }: PlacesAutocompleteProps) {
   const [value, setValue] = useState("")
   const [places, setPlaces] = useState<Place[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleSearch = async (input: string) => {
-    setValue(input)
-    if (!input.length) {
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const handleSearch = async (inputValue: string) => {
+    setValue(inputValue)
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    if (!inputValue.trim()) {
       setPlaces([])
+      setIsLoading(false)
       return
     }
 
-    try {
-      const places = await fetchPlaceSuggestions(input, defaultLocation)
-      console.log("places", places)
-      setPlaces(places)
-    } catch (error) {
-      console.error("Error fetching predictions:", error)
-      setPlaces([])
-    }
+    setIsLoading(true)
+
+    debounceTimeoutRef.current = setTimeout(async () => {
+      try {
+        const fetchedPlaces = await fetchPlaceSuggestions(
+          inputValue,
+          defaultLocation
+        )
+        console.log("places suggestions:", fetchedPlaces)
+        setPlaces(fetchedPlaces)
+      } catch (error) {
+        console.error("Error fetching place predictions:", error)
+        setPlaces([])
+      } finally {
+        setIsLoading(false)
+      }
+    }, DEBOUNCE_DELAY)
   }
 
   const handleSelect = async (place: Place) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+    setIsLoading(false)
+
     try {
       const placeDetails = await fetchPlaceDetails(place.placeId)
       onPlaceSelect(placeDetails)
+      setPlaces([])
+      setValue(place.structuredFormat.mainText.text)
     } catch (error) {
       console.error("Error fetching place details:", error)
     }
@@ -80,14 +115,30 @@ export default function PlacesAutocomplete({
 
   return (
     <div>
-      <Command className="bg-background border border-input rounded-md">
-        <CommandInput
-          placeholder="Search bars and restaurants..."
-          value={value}
-          onValueChange={handleSearch}
-          className="h-9 text-foreground"
-        />
-        {value && places.length > 0 && (
+      <Command className="relative bg-background border border-input rounded-md overflow-visible">
+        <div className="flex items-center px-3" cmdk-input-wrapper="">
+          <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+          <CommandPrimitive.Input
+            ref={inputRef}
+            value={value}
+            onValueChange={handleSearch}
+            placeholder="Search bars and restaurants..."
+            className={cn(
+              "flex h-9 w-full rounded-md bg-transparent py-2 text-sm outline-none appearance-none",
+              "placeholder:text-muted-foreground text-foreground",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              "border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
+            )}
+          />
+        </div>
+
+        {isLoading && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        )}
+
+        {value.trim().length > 0 && places.length > 0 && (
           <CommandList className="bg-popover">
             <CommandEmpty className="text-muted-foreground">
               No places found.
@@ -98,8 +149,6 @@ export default function PlacesAutocomplete({
                   key={place.placeId}
                   value={place.structuredFormat.mainText.text}
                   onSelect={() => {
-                    setPlaces([])
-                    setValue(place.structuredFormat.mainText.text)
                     handleSelect(place)
                   }}
                   className="text-popover-foreground hover:bg-accent hover:text-accent-foreground"
