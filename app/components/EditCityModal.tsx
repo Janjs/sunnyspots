@@ -57,11 +57,17 @@ export default function EditCityModal({
   const handleCitySelectFromAutocomplete = (
     citySelection: SelectedCityData | null
   ) => {
-    setSelectedCity(citySelection)
     if (citySelection) {
+      setSelectedCity(citySelection)
       setInputValue(citySelection.name)
       setIsCitySelectedFromList(true)
+
+      onSave({
+        name: citySelection.name.trim(),
+        placeId: citySelection.placeId,
+      })
     } else {
+      setSelectedCity(null)
       setIsCitySelectedFromList(false)
     }
   }
@@ -71,7 +77,7 @@ export default function EditCityModal({
       onSave({ name: selectedCity.name.trim(), placeId: selectedCity.placeId })
     } else if (inputValue.trim()) {
       onSave({ name: inputValue.trim() })
-    } else {
+    } else if (currentCity) {
       onSave({ name: currentCity })
     }
   }

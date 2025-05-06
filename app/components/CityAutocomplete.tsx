@@ -99,6 +99,9 @@ export default function CityAutocomplete({
     onCitySelect({ name: cityName, fullName: fullText, placeId })
   }
 
+  const showCommandList =
+    inputValue.trim().length > 0 && (isLoading || suggestions.length > 0)
+
   return (
     <Command className="relative w-full bg-background border border-input rounded-md overflow-visible">
       <div className="flex items-center px-3" cmdk-input-wrapper="">
@@ -109,7 +112,7 @@ export default function CityAutocomplete({
           onValueChange={handleInputChange}
           placeholder={placeholder}
           className={cn(
-            "flex h-9 w-full rounded-md bg-transparent py-2 text-sm outline-none",
+            "flex h-9 w-full rounded-md bg-transparent py-2 text-sm outline-none appearance-none",
             "placeholder:text-muted-foreground text-foreground",
             "disabled:cursor-not-allowed disabled:opacity-50",
             "border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
@@ -123,8 +126,8 @@ export default function CityAutocomplete({
         </div>
       )}
 
-      {inputValue.trim().length > 0 && (
-        <CommandList className="absolute top-full mt-px w-full bg-popover border border-input rounded-md shadow-lg z-50">
+      {showCommandList && (
+        <CommandList className="absolute top-full mt-1 w-full bg-popover border border-input rounded-md shadow-lg z-50">
           {isLoading && suggestions.length === 0 && (
             <CommandItem
               disabled
@@ -133,6 +136,7 @@ export default function CityAutocomplete({
               Loading...
             </CommandItem>
           )}
+
           {!isLoading && suggestions.length > 0 && (
             <CommandGroup>
               {suggestions.map((suggestion) => (
