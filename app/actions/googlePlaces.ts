@@ -242,7 +242,9 @@ export async function fetchCitySuggestions(
     input: query,
     includedRegionCodes: ["nl"], // Bias towards Netherlands, can be made dynamic
     languageCode: "en-US",
-    types: ["(cities)"], // Specifically search for cities/towns
+    // Reverting to array based on common usage for (cities) type collection with v1 endpoint
+    // The new API might still use `types` for these broad collections, and an array is typical for multi-value params.
+    includedPrimaryTypes: ["(cities)"],
   }
 
   if (location) {
@@ -252,24 +254,37 @@ export async function fetchCitySuggestions(
           latitude: location.lat,
           longitude: location.lng,
         },
-        radius: 100000, // Larger radius for city search bias
+        radius: 50000, // Larger radius for city search bias
       },
     }
   }
+
+  const url = `${placesApiUrl}:autocomplete`
+  const bodyString = JSON.stringify(body)
+
   console.log(
     `[Places API] Fetching city suggestions for query: "${query}"${
       location ? ` biased around: ${location.lat},${location.lng}` : ""
     }`
   )
-  const response = await fetch(`${placesApiUrl}:autocomplete`, {
+  console.log(`[Places API] Request URL: ${url}`)
+  console.log(`[Places API] Request Body: ${bodyString}`)
+  console.log(`[Places API] CURL Example:
+curl -X POST "${url}" \\
+  -H "Content-Type: application/json" \\
+  -H "X-Goog-Api-Key: ${GOOGLE_API_KEY}" \\
+  -d '${bodyString}'`)
+
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": GOOGLE_API_KEY as string,
     },
-    body: JSON.stringify(body),
+    body: bodyString,
     next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
   })
+
   const endTime = Date.now()
   const responseTime = endTime - startTime
   console.log(

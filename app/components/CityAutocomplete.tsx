@@ -133,9 +133,6 @@ export default function CityAutocomplete({
               Loading...
             </CommandItem>
           )}
-          <CommandEmpty>
-            {!isLoading && inputValue.trim() && "No cities found."}
-          </CommandEmpty>
           {!isLoading && suggestions.length > 0 && (
             <CommandGroup>
               {suggestions.map((suggestion) => (
