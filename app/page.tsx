@@ -88,13 +88,6 @@ export default function MapUI() {
     }
   }
 
-  const handleCityNameChange = (newCity: string) => {
-    setCurrentCity(newCity)
-    // Potentially, you might want to clear current location or search results
-    // if the city is manually changed, as the existing results might be for the old city.
-    // For now, just updating the city name.
-  }
-
   const handleDateChange = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       const updatedDateTime = new Date(currentDate)
@@ -244,14 +237,14 @@ export default function MapUI() {
         {/* Left side panel with flex layout */}
         <div className="absolute left-4 top-4 bottom-4 z-10 flex flex-col gap-4 w-96">
           {/* Places search and top rated places */}
-          <div className="h-full flex flex-col rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
-            <div className="p-6">
+          <div className="h-full flex p-4 gap-3 flex-col rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+            <div className="p-1">
               <PlacesAutocomplete
                 onPlaceSelect={handlePlaceSelect}
                 defaultLocation={DEFAULT_LOCATION}
               />
             </div>
-            <div className="flex-1 overflow-y-auto p-6 pt-0">
+            <div className="flex-1 overflow-y-auto p-1">
               <TopRatedPlaces
                 location={currentLocation}
                 dateTime={currentDate}
