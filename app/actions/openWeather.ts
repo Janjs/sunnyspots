@@ -35,7 +35,7 @@ export async function getWeather(
   const startTime = Date.now()
   console.log(`[OpenWeather API] Fetching weather for lat: ${lat}, lon: ${lon}`)
 
-  const apiUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${OPEN_WEATHER_API_KEY}`
+  const apiUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${OPEN_WEATHER_API_KEY}&units=metric`
   try {
     const response = await fetch(apiUrl, {
       next: { revalidate: ONE_HOUR_IN_SECONDS }, // Cache for 1 hour

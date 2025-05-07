@@ -70,14 +70,14 @@ export default function WeatherDisplay({
   const iconUrl = `https://openweathermap.org/img/wn/${weatherData.icon}@2x.png`
 
   return (
-    <div className="mt-2 flex items-center space-x-3 p-3 bg-muted/30 rounded-lg shadow-sm border border-border/30">
+    <div className="flex items-center space-x-3">
       <div className="flex items-center">
         <Image
           src={iconUrl}
           alt={weatherData.description}
           width={40} // Reduced size slightly
           height={40} // Reduced size slightly
-          className="bg-sky-300/20 rounded-full" // Added a subtle background to icon
+          className="rounded-full" // Added a subtle background to icon
         />
         <span className="ml-2 text-xl font-semibold text-foreground">
           {Math.round(weatherData.temp)}°C

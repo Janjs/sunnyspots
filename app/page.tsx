@@ -242,12 +242,14 @@ export default function MapUI() {
     <div className="flex h-screen w-full overflow-hidden">
       <div className="w-1/2 flex-shrink-0 bg-background overflow-y-auto">
         <div className="flex-col gap-4 p-6">
-          <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
-          <WeatherDisplay
-            latitude={currentLocation.lat}
-            longitude={currentLocation.lng}
-          />
-          <div className="space-y-2 mt-4">
+          <div className="flex justify-between items-center mb-4">
+            <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
+            <WeatherDisplay
+              latitude={currentLocation.lat}
+              longitude={currentLocation.lng}
+            />
+          </div>
+          <div className="space-y-2">
             <PlacesAutocomplete
               onPlaceSelect={handlePlaceSelect}
               defaultLocation={DEFAULT_LOCATION}
