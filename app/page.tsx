@@ -241,8 +241,30 @@ export default function MapUI() {
   return (
     <div className="h-screen w-full overflow-hidden">
       <div className="relative h-full w-full bg-background">
-        {/* City Title and Weather Display at top-left */}
-        <div className="absolute top-4 left-4 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+        {/* Left side panel with flex layout */}
+        <div className="absolute left-4 top-4 bottom-4 z-10 flex flex-col gap-4 w-96">
+          {/* Places search and top rated places */}
+          <div className="h-full flex flex-col rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+            <div className="p-6">
+              <PlacesAutocomplete
+                onPlaceSelect={handlePlaceSelect}
+                defaultLocation={DEFAULT_LOCATION}
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 pt-0">
+              <TopRatedPlaces
+                location={currentLocation}
+                dateTime={currentDate}
+                onPlaceSelect={handlePlaceFromListSelect}
+                onPlacesLoaded={handlePlacesLoaded}
+                selectedPlaceId={selectedPlaceId}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* City Title and Weather Display - now in the center */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
           <div className="flex justify-between items-center">
             <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
             <div className="ml-4">
@@ -254,25 +276,8 @@ export default function MapUI() {
           </div>
         </div>
 
-        {/* Places search and top rated places panel on left side */}
-        <div className="absolute top-32 left-4 z-10 w-80 overflow-y-auto max-h-[calc(100vh-160px)] p-6 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
-          <div className="space-y-4">
-            <PlacesAutocomplete
-              onPlaceSelect={handlePlaceSelect}
-              defaultLocation={DEFAULT_LOCATION}
-            />
-            <TopRatedPlaces
-              location={currentLocation}
-              dateTime={currentDate}
-              onPlaceSelect={handlePlaceFromListSelect}
-              onPlacesLoaded={handlePlacesLoaded}
-              selectedPlaceId={selectedPlaceId}
-            />
-          </div>
-        </div>
-
-        {/* Selected place info panel at top-center */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-2 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+        {/* Selected place info panel - now at top-right */}
+        <div className="absolute top-4 right-4 z-10 px-6 py-2 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg max-w-xs">
           {selectedPlace ? (
             <div className="text-foreground">
               <h2 className="text-lg font-semibold">{selectedPlace.name}</h2>

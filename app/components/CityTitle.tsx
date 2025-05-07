@@ -14,7 +14,7 @@ export default function CityTitle({
   placeholder = "Select City",
 }: CityTitleProps) {
   return (
-    <h1 className="text-3xl font-semibold text-foreground flex items-center">
+    <h1 className="text-1xl font-semibold text-foreground flex items-center">
       <span>Sunny spots in&nbsp;</span>
       <div className="group relative flex items-center">
         <span
