@@ -113,9 +113,12 @@ export default function MapUI() {
     }
     mapViewRef.current?.selectMarkerAtLocation(coordinates)
     setSelectedPlaceId(place.place_id)
+
     if (place.place_id) {
-      const fullPlace = placesData.find((p) => p.place_id === place.place_id)
-      setSelectedPlace(fullPlace || null)
+      const existingPlace = placesData.find(
+        (p) => p.place_id === place.place_id
+      )
+      setSelectedPlace(existingPlace || null)
     }
   }
 
@@ -128,22 +131,21 @@ export default function MapUI() {
     } | null
   ) => {
     if (coordinates) {
-      if (coordinates.place_id) {
-        setSelectedPlaceId(coordinates.place_id)
-        const fullPlace = placesData.find(
-          (p) => p.place_id === coordinates.place_id
-        )
-        setSelectedPlace(fullPlace || null)
-        return
+      let placeId = coordinates.place_id
+
+      // If no direct place_id, try to find it from coordinates
+      if (!placeId) {
+        const coordKey = `${coordinates.lat.toFixed(
+          6
+        )},${coordinates.lng.toFixed(6)}`
+        placeId = coordinatesPlaceIdMap.get(coordKey)
       }
-      const coordKey = `${coordinates.lat.toFixed(6)},${coordinates.lng.toFixed(
-        6
-      )}`
-      const placeId = coordinatesPlaceIdMap.get(coordKey)
+
       setSelectedPlaceId(placeId)
+
       if (placeId) {
-        const fullPlace = placesData.find((p) => p.place_id === placeId)
-        setSelectedPlace(fullPlace || null)
+        const existingPlace = placesData.find((p) => p.place_id === placeId)
+        setSelectedPlace(existingPlace || null)
       } else {
         setSelectedPlace(null)
       }

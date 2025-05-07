@@ -3,6 +3,7 @@
 const OPEN_WEATHER_API_KEY = process.env.OPEN_WEATHER_API_KEY
 
 // Cache duration in seconds
+const ONE_DAY_IN_SECONDS = 86400
 const ONE_HOUR_IN_SECONDS = 3600
 
 // Helper to determine if response was likely cached based on timing
@@ -38,7 +39,7 @@ export async function getWeather(
   const apiUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,daily,alerts&appid=${OPEN_WEATHER_API_KEY}&units=metric`
   try {
     const response = await fetch(apiUrl, {
-      next: { revalidate: ONE_HOUR_IN_SECONDS }, // Cache for 1 hour
+      next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 hour
     })
     const endTime = Date.now()
     const responseTime = endTime - startTime

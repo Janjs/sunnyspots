@@ -265,14 +265,6 @@ export async function fetchCitySuggestions(
       location ? ` biased around: ${location.lat},${location.lng}` : ""
     }`
   )
-  console.log(`[Places API] Request URL: ${url}`)
-  console.log(`[Places API] Request Body: ${bodyString}`)
-  console.log(`[Places API] CURL Example:
-curl -X POST "${url}" \\
-  -H "Content-Type: application/json" \\
-  -H "X-Goog-Api-Key: ${GOOGLE_API_KEY}" \\
-  -d '${bodyString}'`)
-
   const response = await fetch(url, {
     method: "POST",
     headers: {
