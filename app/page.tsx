@@ -242,13 +242,6 @@ export default function MapUI() {
     <div className="flex h-screen w-full overflow-hidden">
       <div className="w-1/2 flex-shrink-0 bg-background overflow-y-auto">
         <div className="flex-col gap-4 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
-            <WeatherDisplay
-              latitude={currentLocation.lat}
-              longitude={currentLocation.lng}
-            />
-          </div>
           <div className="space-y-2">
             <PlacesAutocomplete
               onPlaceSelect={handlePlaceSelect}
@@ -267,6 +260,15 @@ export default function MapUI() {
         </div>
       </div>
       <div className="relative flex-1 bg-background">
+        <div className="absolute top-4 left-4 z-10 px-4 py-3 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg flex justify-between items-center">
+          <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
+          <div className="ml-4">
+            <WeatherDisplay
+              latitude={currentLocation.lat}
+              longitude={currentLocation.lng}
+            />
+          </div>
+        </div>
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-2 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
           {selectedPlace ? (
             <div className="text-foreground">

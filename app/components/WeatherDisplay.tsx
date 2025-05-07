@@ -48,11 +48,7 @@ export default function WeatherDisplay({
   }, [latitude, longitude])
 
   if (loading) {
-    return (
-      <div className="mt-2 p-2 text-sm text-foreground/70">
-        Loading weather...
-      </div>
-    )
+    return <></>
   }
 
   if (error) {
