@@ -26,12 +26,16 @@ interface MapViewProps {
   defaultLocation: Location
   initialDate: Date
   onMarkerSelected?: (
-    coordinates: (Location & { place_id?: string }) | null
+    coordinates: (Location & { place_id?: string; name?: string }) | null
   ) => void
 }
 
 interface MapViewRef {
-  addMarker: (coordinates: Location, outdoorSeating: boolean) => void
+  addMarker: (
+    coordinates: Location,
+    outdoorSeating: boolean,
+    name?: string
+  ) => void
   setDate: (date: Date) => void
   clearMarkers: () => void
   addMarkers: (
@@ -39,6 +43,7 @@ interface MapViewRef {
       geometry: { location: Location }
       outdoorSeating: boolean
       place_id?: string
+      name?: string
     }[]
   ) => void
   centerOnLocation: (coordinates: Location) => void
@@ -59,6 +64,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const markers = useRef<mapboxgl.Marker[]>([])
     const currentDate = useRef<Date>(initialDate)
     const selectedMarker = useRef<mapboxgl.Marker | null>(null)
+    const markerData = useRef<
+      Map<string, { name?: string; place_id?: string }>
+    >(new Map())
 
     useEffect(() => {
       if (map.current) {
@@ -71,19 +79,32 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       }
     }, [defaultLocation]) // Re-run effect when defaultLocation changes
 
-    const createMarkerElement = (coordinates: Location) => {
+    const createMarkerElement = (coordinates: Location, name?: string) => {
       const el = document.createElement("div")
+      el.style.display = "flex"
+      el.style.alignItems = "center"
+      el.style.cursor = "pointer"
+      // el.style.transform = "translate(-50%, -50%)"; // Apply this to individual icon if needed or adjust overall layout
+
+      const iconContainer = document.createElement("div")
       const hasSun = hasSunlight(
         currentDate.current,
         coordinates.lat,
         coordinates.lng
       )
 
-      el.className = cn(
+      iconContainer.className = cn(
         buttonVariants({ variant: "secondary", size: "icon" }),
         "rounded-full shadow-md hover:bg-white/90 relative",
         hasSun ? "bg-blue-500" : "bg-gray-700"
       )
+      iconContainer.style.width = "1.5rem"
+      iconContainer.style.height = "1.5rem"
+      iconContainer.style.padding = "0.15rem"
+      iconContainer.style.display = "flex"
+      iconContainer.style.justifyContent = "center"
+      iconContainer.style.alignItems = "center"
+      // iconContainer.style.transform = "translate(-50%, -50%)"; // Already handled by Mapbox for the marker element itself if centered
 
       // Add icon based on sunlight status
       const iconElement = document.createElement("div")
@@ -108,35 +129,64 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       iconElement.style.justifyContent = "center"
       iconElement.style.alignItems = "center"
 
-      el.appendChild(iconElement)
-      el.style.cursor = "pointer"
-      el.style.transform = "translate(-50%, -50%)"
-      el.style.width = "1.5rem"
-      el.style.height = "1.5rem"
-      el.style.padding = "0.15rem"
+      iconContainer.appendChild(iconElement)
 
       // Store original colors for flipping
       const originalBgColor = hasSun ? "rgb(59, 130, 246)" : "rgb(55, 65, 81)" // blue-500 or gray-700
       const originalIconColor = hasSun ? "#fef9c3" : "#94a3b8" // yellow or slate
 
       // Add hover event to flip colors
-      el.addEventListener("mouseenter", () => {
-        el.style.backgroundColor = originalIconColor
+      iconContainer.addEventListener("mouseenter", () => {
+        iconContainer.style.backgroundColor = originalIconColor
         iconElement.style.color = originalBgColor
       })
 
-      el.addEventListener("mouseleave", () => {
+      iconContainer.addEventListener("mouseleave", () => {
         // Only reset if not selected
-        if (!el.classList.contains("marker-selected")) {
-          el.style.backgroundColor = originalBgColor
+        if (!iconContainer.classList.contains("marker-selected")) {
+          iconContainer.style.backgroundColor = originalBgColor
           iconElement.style.color = originalIconColor
         }
       })
 
       // Store sunlight status as data attribute for later reference
-      el.dataset.hasSun = hasSun.toString()
-      el.dataset.bgColor = originalBgColor
-      el.dataset.iconColor = originalIconColor
+      iconContainer.dataset.hasSun = hasSun.toString()
+      iconContainer.dataset.bgColor = originalBgColor
+      iconContainer.dataset.iconColor = originalIconColor
+
+      el.appendChild(iconContainer)
+
+      if (name) {
+        const nameElement = document.createElement("span")
+        nameElement.textContent = name
+        nameElement.style.marginLeft = "8px" // Space between icon and name
+        nameElement.style.padding = "3px 6px" // Adjusted padding for new style
+        nameElement.style.backgroundColor = "rgba(255, 255, 255, 0.1)" // Semi-transparent white background
+        nameElement.style.backdropFilter = "blur(5px)" // Blur effect
+        nameElement.style.webkitBackdropFilter = "blur(5px)" // Safari vendor prefix for backdrop-filter
+        nameElement.style.border = "1px solid rgba(255, 255, 255, 0.15)" // Subtle border
+        nameElement.style.borderRadius = "6px" // Slightly more pronounced border radius
+        nameElement.style.fontSize = "12px"
+        nameElement.style.fontWeight = "500"
+        nameElement.style.boxShadow = "0 2px 5px rgba(0,0,0,0.1)" // Subtle shadow for depth
+        nameElement.style.color = "#E5E7EB" // Light text color for better contrast on blurred background
+
+        nameElement.style.whiteSpace = "normal" // Allow wrapping
+        nameElement.style.wordBreak = "break-word" // Break long words
+        nameElement.style.maxWidth = "120px" // Set a max width for the name
+
+        // Styles for two-line truncation with ellipsis
+        nameElement.style.display = "-webkit-box"
+        nameElement.style.webkitLineClamp = "2"
+        nameElement.style.webkitBoxOrient = "vertical"
+        nameElement.style.overflow = "hidden"
+        nameElement.style.textOverflow = "ellipsis"
+
+        el.appendChild(nameElement)
+        el.dataset.placeName = name // Store name for retrieval
+      }
+      // Set a data attribute for the entire element for easy access
+      el.dataset.markerElement = "true"
 
       return el
     }
@@ -145,6 +195,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       markers.current.forEach((marker) => marker.remove())
       markers.current = []
       selectedMarker.current = null
+      markerData.current.clear()
     }
 
     const addMarkers = (
@@ -152,30 +203,140 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         geometry: { location: Location }
         outdoorSeating: boolean
         place_id?: string
+        name?: string
       }[]
     ) => {
       clearMarkers()
       places.forEach((place) => {
-        const markerElement = createMarkerElement(place.geometry.location)
+        const markerElement = createMarkerElement(
+          place.geometry.location,
+          place.name
+        )
 
-        // Store place_id as data attribute for reference
-        if (place.place_id) {
-          markerElement.dataset.placeId = place.place_id
-        }
-
-        // Store coordinates in standardized format for reference
+        // Store place_id and name as data attribute for reference
         const coords = place.geometry.location
         const coordKey = `${coords.lat.toFixed(6)},${coords.lng.toFixed(6)}`
         markerElement.dataset.coordKey = coordKey
+        if (place.place_id) {
+          markerElement.dataset.placeId = place.place_id
+          markerData.current.set(coordKey, {
+            name: place.name,
+            place_id: place.place_id,
+          })
+        } else {
+          markerData.current.set(coordKey, { name: place.name })
+        }
 
         const marker = new mapboxgl.Marker({
           element: markerElement,
+          anchor: "left", // Anchor the marker so the icon is at the coordinate, name extends to the right
+          offset: [0, -10], // Adjust offset if needed to center the icon part, e.g. half of icon height
         })
           .setLngLat([place.geometry.location.lng, place.geometry.location.lat])
           .addTo(map.current!)
 
         // Add click handler to marker
-        marker.getElement().addEventListener("click", () => {
+        const iconContainer = markerElement.querySelector(
+          "div[data-has-sun]"
+        ) as HTMLElement
+        if (iconContainer) {
+          iconContainer.addEventListener("click", () => {
+            if (selectedMarker.current === marker) {
+              // Deselect if already selected
+              unselectMarker(selectedMarker.current)
+              selectedMarker.current = null
+              // Notify parent component
+              onMarkerSelected?.(null)
+            } else {
+              // Unselect previous marker if any
+              if (selectedMarker.current) {
+                unselectMarker(selectedMarker.current)
+              }
+
+              // Select this marker
+              selectMarker(marker)
+              selectedMarker.current = marker
+
+              // Center the map on the marker
+              const lngLat = marker.getLngLat()
+              map.current?.panTo([lngLat.lng, lngLat.lat], {
+                duration: 1000,
+              })
+
+              // Notify parent component with precise coordinates and place_id if available
+              const placeId = marker.getElement().dataset.placeId
+              const placeName = marker.getElement().dataset.placeName
+
+              onMarkerSelected?.({
+                lat: parseFloat(lngLat.lat.toFixed(6)),
+                lng: parseFloat(lngLat.lng.toFixed(6)),
+                place_id: placeId,
+                name: placeName,
+              })
+            }
+          })
+        }
+        markers.current.push(marker)
+      })
+    }
+
+    const selectMarker = (marker: mapboxgl.Marker) => {
+      const el = marker.getElement()
+      const iconContainer = el.querySelector("div[data-has-sun]") as HTMLElement
+      if (!iconContainer) return
+
+      const iconElement = iconContainer.querySelector("div") as HTMLElement
+      iconContainer.classList.add("marker-selected")
+
+      const bgColor = iconContainer.dataset.iconColor || ""
+      const iconColor = iconContainer.dataset.bgColor || ""
+
+      iconContainer.style.backgroundColor = bgColor
+      if (iconElement) iconElement.style.color = iconColor
+    }
+
+    const unselectMarker = (marker: mapboxgl.Marker) => {
+      const el = marker.getElement()
+      const iconContainer = el.querySelector("div[data-has-sun]") as HTMLElement
+      if (!iconContainer) return
+
+      const iconElement = iconContainer.querySelector("div") as HTMLElement
+      iconContainer.classList.remove("marker-selected")
+
+      const bgColor = iconContainer.dataset.bgColor || ""
+      const iconColor = iconContainer.dataset.iconColor || ""
+
+      iconContainer.style.backgroundColor = bgColor
+      if (iconElement) iconElement.style.color = iconColor
+    }
+
+    const addMarker = (
+      coordinates: Location,
+      outdoorSeating: boolean,
+      name?: string
+    ) => {
+      clearMarkers()
+      const markerElement = createMarkerElement(coordinates, name)
+      const coordKey = `${coordinates.lat.toFixed(6)},${coordinates.lng.toFixed(
+        6
+      )}`
+      markerData.current.set(coordKey, { name })
+      if (name) markerElement.dataset.placeName = name
+
+      const marker = new mapboxgl.Marker({
+        element: markerElement,
+        anchor: "left",
+        offset: [0, -10],
+      })
+        .setLngLat([coordinates.lng, coordinates.lat])
+        .addTo(map.current!)
+
+      // Add click handler to marker icon
+      const iconContainer = markerElement.querySelector(
+        "div[data-has-sun]"
+      ) as HTMLElement
+      if (iconContainer) {
+        iconContainer.addEventListener("click", () => {
           if (selectedMarker.current === marker) {
             // Deselect if already selected
             unselectMarker(selectedMarker.current)
@@ -198,85 +359,16 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
               duration: 1000,
             })
 
-            // Notify parent component with precise coordinates and place_id if available
-            const placeId = marker.getElement().dataset.placeId
-
+            // Notify parent component with precise coordinates
+            const placeName = marker.getElement().dataset.placeName
             onMarkerSelected?.({
               lat: parseFloat(lngLat.lat.toFixed(6)),
               lng: parseFloat(lngLat.lng.toFixed(6)),
-              place_id: placeId,
+              name: placeName,
             })
           }
         })
-
-        markers.current.push(marker)
-      })
-    }
-
-    const selectMarker = (marker: mapboxgl.Marker) => {
-      const el = marker.getElement()
-      const iconElement = el.querySelector("div") as HTMLElement
-      el.classList.add("marker-selected")
-
-      const bgColor = el.dataset.iconColor || ""
-      const iconColor = el.dataset.bgColor || ""
-
-      el.style.backgroundColor = bgColor
-      iconElement.style.color = iconColor
-    }
-
-    const unselectMarker = (marker: mapboxgl.Marker) => {
-      const el = marker.getElement()
-      const iconElement = el.querySelector("div") as HTMLElement
-      el.classList.remove("marker-selected")
-
-      const bgColor = el.dataset.bgColor || ""
-      const iconColor = el.dataset.iconColor || ""
-
-      el.style.backgroundColor = bgColor
-      iconElement.style.color = iconColor
-    }
-
-    const addMarker = (coordinates: Location, outdoorSeating: boolean) => {
-      clearMarkers()
-      const markerElement = createMarkerElement(coordinates)
-      const marker = new mapboxgl.Marker({
-        element: markerElement,
-      })
-        .setLngLat([coordinates.lng, coordinates.lat])
-        .addTo(map.current!)
-
-      // Add click handler to marker
-      marker.getElement().addEventListener("click", () => {
-        if (selectedMarker.current === marker) {
-          // Deselect if already selected
-          unselectMarker(selectedMarker.current)
-          selectedMarker.current = null
-          // Notify parent component
-          onMarkerSelected?.(null)
-        } else {
-          // Unselect previous marker if any
-          if (selectedMarker.current) {
-            unselectMarker(selectedMarker.current)
-          }
-
-          // Select this marker
-          selectMarker(marker)
-          selectedMarker.current = marker
-
-          // Center the map on the marker
-          const lngLat = marker.getLngLat()
-          map.current?.panTo([lngLat.lng, lngLat.lat], {
-            duration: 1000,
-          })
-
-          // Notify parent component with precise coordinates
-          onMarkerSelected?.({
-            lat: parseFloat(lngLat.lat.toFixed(6)),
-            lng: parseFloat(lngLat.lng.toFixed(6)),
-          })
-        }
-      })
+      }
 
       markers.current.push(marker)
       centerOnLocation(coordinates)
@@ -295,61 +387,81 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       }
       // Defer marker updates to avoid conflict with ShadeMap update
       setTimeout(() => {
-        const existingMarkers = markers.current
-        const previouslySelectedMarker = selectedMarker.current
-        let previouslySelectedCoords = null
+        const existingMarkersData: {
+          coords: { lat: number; lng: number }
+          name?: string
+          place_id?: string
+          isSelected: boolean
+        }[] = []
 
-        if (previouslySelectedMarker) {
-          const lngLat = previouslySelectedMarker.getLngLat()
-          previouslySelectedCoords = { lng: lngLat.lng, lat: lngLat.lat }
-        }
+        markers.current.forEach((marker) => {
+          const lngLat = marker.getLngLat()
+          const coordKey = `${lngLat.lat.toFixed(6)},${lngLat.lng.toFixed(6)}`
+          const data = markerData.current.get(coordKey)
+          existingMarkersData.push({
+            coords: { lat: lngLat.lat, lng: lngLat.lng },
+            name: data?.name,
+            place_id: data?.place_id,
+            isSelected: selectedMarker.current === marker,
+          })
+          marker.remove() // Remove old marker
+        })
 
         markers.current = []
         selectedMarker.current = null
+        // markerData.current remains as it was, just used for lookup
 
-        existingMarkers.forEach((marker, index) => {
-          const coordinates = marker.getLngLat()
+        existingMarkersData.forEach((data) => {
+          const newElement = createMarkerElement(data.coords, data.name)
+          if (data.place_id) newElement.dataset.placeId = data.place_id
+          if (data.name) newElement.dataset.placeName = data.name
+          const coordKey = `${data.coords.lat.toFixed(
+            6
+          )},${data.coords.lng.toFixed(6)}`
+          newElement.dataset.coordKey = coordKey
 
-          const newElement = createMarkerElement({
-            lat: coordinates.lat,
-            lng: coordinates.lng,
+          const newMarker = new mapboxgl.Marker({
+            element: newElement,
+            anchor: "left",
+            offset: [0, -10],
           })
-
-          const newMarker = new mapboxgl.Marker({ element: newElement })
-            .setLngLat([coordinates.lng, coordinates.lat])
+            .setLngLat([data.coords.lng, data.coords.lat])
             .addTo(map.current!)
 
-          // Add click handler to marker
-          newMarker.getElement().addEventListener("click", () => {
-            if (selectedMarker.current === newMarker) {
-              // Deselect if already selected
-              unselectMarker(selectedMarker.current)
-              selectedMarker.current = null
-            } else {
-              // Unselect previous marker if any
-              if (selectedMarker.current) {
+          const iconContainer = newElement.querySelector(
+            "div[data-has-sun]"
+          ) as HTMLElement
+          if (iconContainer) {
+            iconContainer.addEventListener("click", () => {
+              if (selectedMarker.current === newMarker) {
                 unselectMarker(selectedMarker.current)
+                selectedMarker.current = null
+                onMarkerSelected?.(null)
+              } else {
+                if (selectedMarker.current) {
+                  unselectMarker(selectedMarker.current)
+                }
+                selectMarker(newMarker)
+                selectedMarker.current = newMarker
+                const lngLat = newMarker.getLngLat()
+                const placeId = newElement.dataset.placeId
+                const placeName = newElement.dataset.placeName
+                onMarkerSelected?.({
+                  lat: parseFloat(lngLat.lat.toFixed(6)),
+                  lng: parseFloat(lngLat.lng.toFixed(6)),
+                  place_id: placeId,
+                  name: placeName,
+                })
               }
-
-              // Select this marker
-              selectMarker(newMarker)
-              selectedMarker.current = newMarker
-            }
-          })
+            })
+          }
 
           markers.current.push(newMarker)
 
-          // Check if this was the previously selected marker
-          if (
-            previouslySelectedCoords &&
-            coordinates.lng === previouslySelectedCoords.lng &&
-            coordinates.lat === previouslySelectedCoords.lat
-          ) {
+          if (data.isSelected) {
             selectMarker(newMarker)
             selectedMarker.current = newMarker
           }
-
-          marker.remove()
         })
       }, 0)
     }
@@ -409,12 +521,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
         // Get place_id if available
         const placeId = marker.getElement().dataset.placeId
+        const placeName = marker.getElement().dataset.placeName
 
         // Notify parent component with precise coordinates
         onMarkerSelected?.({
           lat: parseFloat(lngLat.lat.toFixed(6)),
           lng: parseFloat(lngLat.lng.toFixed(6)),
           place_id: placeId,
+          name: placeName,
         })
       }
     }

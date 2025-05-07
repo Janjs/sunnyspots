@@ -29,13 +29,16 @@ const DEFAULT_LOCATION = {
 interface MapViewRef {
   addMarker: (
     coordinates: { lat: number; lng: number },
-    outdoorSeating: boolean
+    outdoorSeating: boolean,
+    name?: string
   ) => void
   setDate: (date: Date) => void
   addMarkers: (
     places: {
       geometry: { location: { lat: number; lng: number } }
       outdoorSeating: boolean
+      place_id?: string
+      name?: string
     }[]
   ) => void
   centerOnLocation: (coordinates: { lat: number; lng: number }) => void
@@ -66,7 +69,11 @@ export default function MapUI() {
         lat: place.geometry.location.lat,
       }
       setCurrentLocation(coordinates)
-      mapViewRef.current?.addMarker(coordinates, place.outdoorSeating)
+      mapViewRef.current?.addMarker(
+        coordinates,
+        place.outdoorSeating,
+        place.name
+      )
       setSelectedPlaceId(undefined)
       setSelectedPlace(null)
       if (place.address_components) {
@@ -118,7 +125,12 @@ export default function MapUI() {
   }
 
   const handleMarkerSelected = (
-    coordinates: { lat: number; lng: number; place_id?: string } | null
+    coordinates: {
+      lat: number
+      lng: number
+      place_id?: string
+      name?: string
+    } | null
   ) => {
     if (coordinates) {
       if (coordinates.place_id) {
@@ -155,12 +167,13 @@ export default function MapUI() {
       newCoordinatesPlaceIdMap.set(coordKey, place.place_id)
     })
     setCoordinatesPlaceIdMap(newCoordinatesPlaceIdMap)
-    const placesWithOutdoorSeating = places.map((place) => ({
+    const placesWithOutdoorSeatingAndName = places.map((place) => ({
       geometry: place.geometry,
       outdoorSeating: true,
       place_id: place.place_id,
+      name: place.name,
     }))
-    mapViewRef.current?.addMarkers(placesWithOutdoorSeating)
+    mapViewRef.current?.addMarkers(placesWithOutdoorSeatingAndName)
   }
 
   const times = SunCalc.getTimes(
