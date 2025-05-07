@@ -95,12 +95,17 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         nameElement.style.backgroundColor = "rgba(255, 255, 255, 0.1)"
         nameElement.style.backdropFilter = "blur(5px)"
         ;(nameElement.style as any).webkitBackdropFilter = "blur(5px)" // Safari vendor prefix
-        nameElement.style.border = "1px solid rgba(255, 255, 255, 0.15)"
         nameElement.style.borderRadius = "6px"
         nameElement.style.fontSize = "12px"
         nameElement.style.fontWeight = "500"
         nameElement.style.boxShadow = "0 2px 5px rgba(0,0,0,0.1)"
-        nameElement.style.color = "#E5E7EB"
+        nameElement.style.color = hasSunlight(
+          currentDate.current,
+          coordinates.lat,
+          coordinates.lng
+        )
+          ? "#000000"
+          : "#E5E7EB"
 
         nameElement.style.whiteSpace = "normal"
         nameElement.style.wordBreak = "break-word"
@@ -284,6 +289,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
     const selectMarker = (marker: mapboxgl.Marker) => {
       const el = marker.getElement()
+      el.style.zIndex = "1000" // Bring to front
+
       const iconContainer = el.querySelector("div[data-has-sun]") as HTMLElement
       if (!iconContainer) return
 
@@ -299,6 +306,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
     const unselectMarker = (marker: mapboxgl.Marker) => {
       const el = marker.getElement()
+      el.style.zIndex = "0" // Reset z-index
+
       const iconContainer = el.querySelector("div[data-has-sun]") as HTMLElement
       if (!iconContainer) return
 
