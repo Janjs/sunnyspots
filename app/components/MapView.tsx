@@ -82,9 +82,40 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const createMarkerElement = (coordinates: Location, name?: string) => {
       const el = document.createElement("div")
       el.style.display = "flex"
-      el.style.alignItems = "center"
+      el.style.flexDirection = "column" // Stack name and icon vertically
+      el.style.alignItems = "center" // Center items horizontally
       el.style.cursor = "pointer"
-      // el.style.transform = "translate(-50%, -50%)"; // Apply this to individual icon if needed or adjust overall layout
+
+      // Name element first, if present
+      if (name) {
+        const nameElement = document.createElement("span")
+        nameElement.textContent = name
+        nameElement.style.marginBottom = "4px" // Space between name and icon
+        nameElement.style.padding = "3px 6px"
+        nameElement.style.backgroundColor = "rgba(255, 255, 255, 0.1)"
+        nameElement.style.backdropFilter = "blur(5px)"
+        ;(nameElement.style as any).webkitBackdropFilter = "blur(5px)" // Safari vendor prefix
+        nameElement.style.border = "1px solid rgba(255, 255, 255, 0.15)"
+        nameElement.style.borderRadius = "6px"
+        nameElement.style.fontSize = "12px"
+        nameElement.style.fontWeight = "500"
+        nameElement.style.boxShadow = "0 2px 5px rgba(0,0,0,0.1)"
+        nameElement.style.color = "#E5E7EB"
+
+        nameElement.style.whiteSpace = "normal"
+        nameElement.style.wordBreak = "break-word"
+        nameElement.style.maxWidth = "120px"
+        nameElement.style.textAlign = "center"
+
+        nameElement.style.display = "-webkit-box"
+        nameElement.style.webkitLineClamp = "2"
+        nameElement.style.webkitBoxOrient = "vertical"
+        nameElement.style.overflow = "hidden"
+        nameElement.style.textOverflow = "ellipsis"
+
+        el.appendChild(nameElement)
+        el.dataset.placeName = name
+      }
 
       const iconContainer = document.createElement("div")
       const hasSun = hasSunlight(
@@ -156,35 +187,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
       el.appendChild(iconContainer)
 
-      if (name) {
-        const nameElement = document.createElement("span")
-        nameElement.textContent = name
-        nameElement.style.marginLeft = "8px" // Space between icon and name
-        nameElement.style.padding = "3px 6px" // Adjusted padding for new style
-        nameElement.style.backgroundColor = "rgba(255, 255, 255, 0.1)" // Semi-transparent white background
-        nameElement.style.backdropFilter = "blur(5px)" // Blur effect
-        nameElement.style.webkitBackdropFilter = "blur(5px)" // Safari vendor prefix for backdrop-filter
-        nameElement.style.border = "1px solid rgba(255, 255, 255, 0.15)" // Subtle border
-        nameElement.style.borderRadius = "6px" // Slightly more pronounced border radius
-        nameElement.style.fontSize = "12px"
-        nameElement.style.fontWeight = "500"
-        nameElement.style.boxShadow = "0 2px 5px rgba(0,0,0,0.1)" // Subtle shadow for depth
-        nameElement.style.color = "#E5E7EB" // Light text color for better contrast on blurred background
-
-        nameElement.style.whiteSpace = "normal" // Allow wrapping
-        nameElement.style.wordBreak = "break-word" // Break long words
-        nameElement.style.maxWidth = "120px" // Set a max width for the name
-
-        // Styles for two-line truncation with ellipsis
-        nameElement.style.display = "-webkit-box"
-        nameElement.style.webkitLineClamp = "2"
-        nameElement.style.webkitBoxOrient = "vertical"
-        nameElement.style.overflow = "hidden"
-        nameElement.style.textOverflow = "ellipsis"
-
-        el.appendChild(nameElement)
-        el.dataset.placeName = name // Store name for retrieval
-      }
       // Set a data attribute for the entire element for easy access
       el.dataset.markerElement = "true"
 
@@ -229,8 +231,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
         const marker = new mapboxgl.Marker({
           element: markerElement,
-          anchor: "left", // Anchor the marker so the icon is at the coordinate, name extends to the right
-          offset: [0, -10], // Adjust offset if needed to center the icon part, e.g. half of icon height
+          anchor: "bottom", // Anchor to the bottom-center of the element
+          offset: [0, 0], // Reset offset, adjust if necessary for precise icon bottom alignment
         })
           .setLngLat([place.geometry.location.lng, place.geometry.location.lat])
           .addTo(map.current!)
@@ -325,8 +327,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
       const marker = new mapboxgl.Marker({
         element: markerElement,
-        anchor: "left",
-        offset: [0, -10],
+        anchor: "bottom", // Anchor to the bottom-center
+        offset: [0, 0], // Reset offset
       })
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!)
@@ -422,8 +424,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
           const newMarker = new mapboxgl.Marker({
             element: newElement,
-            anchor: "left",
-            offset: [0, -10],
+            anchor: "bottom", // Anchor to the bottom-center
+            offset: [0, 0], // Reset offset
           })
             .setLngLat([data.coords.lng, data.coords.lat])
             .addTo(map.current!)
