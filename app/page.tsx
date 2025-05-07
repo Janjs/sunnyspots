@@ -16,6 +16,7 @@ import { fetchPlaceDetails } from "@/actions/googlePlaces"
 import CityTitle from "@/app/components/CityTitle"
 import EditCityModal from "@/app/components/EditCityModal"
 import WeatherDisplay from "@/app/components/WeatherDisplay"
+import InfoPanel from "@/app/components/InfoPanel"
 
 // Extend PlaceResult for our needs
 interface ExtendedPlaceResult extends PlaceResult {
@@ -270,24 +271,8 @@ export default function MapUI() {
         </div>
 
         {/* Selected place info panel - now at top-right */}
-        <div className="absolute top-4 right-4 z-10 px-6 py-2 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg max-w-xs">
-          {selectedPlace ? (
-            <div className="text-foreground">
-              <h2 className="text-lg font-semibold">{selectedPlace.name}</h2>
-              {selectedPlace.rating && (
-                <div className="flex items-center gap-1 text-sm">
-                  <span>Rating: {selectedPlace.rating}</span>
-                  {selectedPlace.user_ratings_total && (
-                    <span>({selectedPlace.user_ratings_total} reviews)</span>
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-sm text-foreground/70 italic">
-              Select a place to see details
-            </div>
-          )}
+        <div className="absolute top-4 right-4 z-10">
+          <InfoPanel selectedPlace={selectedPlace} currentDate={currentDate} />
         </div>
 
         <MapView
