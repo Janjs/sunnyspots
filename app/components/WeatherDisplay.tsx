@@ -71,17 +71,15 @@ export default function WeatherDisplay({
         <Image
           src={iconUrl}
           alt={weatherData.description}
-          width={40} // Reduced size slightly
-          height={40} // Reduced size slightly
-          className="rounded-full" // Added a subtle background to icon
+          width={40}
+          height={40}
+          className="rounded-full"
         />
         <span className="ml-2 text-xl font-semibold text-foreground">
           {Math.round(weatherData.temp)}°C
         </span>
       </div>
       <div className="text-xs text-foreground/80">
-        {" "}
-        {/* Adjusted text size for compactness */}
         <p>
           UV Index: <span className="font-bold">{weatherData.uvi}</span>
         </p>

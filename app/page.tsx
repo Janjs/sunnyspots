@@ -239,16 +239,28 @@ export default function MapUI() {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
-      <div className="w-1/2 flex-shrink-0 bg-background overflow-y-auto">
-        <div className="flex-col gap-4 p-6">
-          <div className="space-y-2">
+    <div className="h-screen w-full overflow-hidden">
+      <div className="relative h-full w-full bg-background">
+        {/* City Title and Weather Display at top-left */}
+        <div className="absolute top-4 left-4 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+          <div className="flex justify-between items-center">
+            <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
+            <div className="ml-4">
+              <WeatherDisplay
+                latitude={currentLocation.lat}
+                longitude={currentLocation.lng}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Places search and top rated places panel on left side */}
+        <div className="absolute top-32 left-4 z-10 w-80 overflow-y-auto max-h-[calc(100vh-160px)] p-6 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+          <div className="space-y-4">
             <PlacesAutocomplete
               onPlaceSelect={handlePlaceSelect}
               defaultLocation={DEFAULT_LOCATION}
             />
-          </div>
-          <div className="mt-4">
             <TopRatedPlaces
               location={currentLocation}
               dateTime={currentDate}
@@ -258,17 +270,8 @@ export default function MapUI() {
             />
           </div>
         </div>
-      </div>
-      <div className="relative flex-1 bg-background">
-        <div className="absolute top-4 left-4 z-10 px-4 py-3 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg flex justify-between items-center">
-          <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
-          <div className="ml-4">
-            <WeatherDisplay
-              latitude={currentLocation.lat}
-              longitude={currentLocation.lng}
-            />
-          </div>
-        </div>
+
+        {/* Selected place info panel at top-center */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-2 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
           {selectedPlace ? (
             <div className="text-foreground">
@@ -288,6 +291,7 @@ export default function MapUI() {
             </div>
           )}
         </div>
+
         <MapView
           ref={mapViewRef}
           onLoadingProgress={setLoadingPercentage}
@@ -295,12 +299,15 @@ export default function MapUI() {
           initialDate={currentDate}
           onMarkerSelected={handleMarkerSelected}
         />
+
         {loadingPercentage > 0 && loadingPercentage < 100 && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
             Loading map: {loadingPercentage}%
           </div>
         )}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg w-4/5 max-w-3xl">
+
+        {/* Time controls panel at bottom */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 p-4 rounded-lg bg-white/15 backdrop-blur-md border border-white/20 shadow-lg w-4/5 max-w-lg">
           <div className="space-y-4">
             <div className="flex flex-row items-center justify-between gap-4">
               <DatePicker date={currentDate} setDate={handleDateChange} />
@@ -335,6 +342,7 @@ export default function MapUI() {
           </div>
         </div>
       </div>
+
       <EditCityModal
         isOpen={isEditCityModalOpen}
         currentCity={currentCity}

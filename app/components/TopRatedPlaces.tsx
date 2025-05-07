@@ -185,7 +185,7 @@ export default function TopRatedPlaces({
       {places.length === 0 ? (
         <p className="text-sm text-muted-foreground">No places found nearby</p>
       ) : (
-        <div className="grid gap-4 grid-cols-1 xs:grid-cols-2 md:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
           {places.map((place) => (
             <PlaceCard
               key={place.place_id}

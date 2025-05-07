@@ -58,7 +58,7 @@ export function TimeSlider({
   }
 
   return (
-    <div className={cn("w-full space-y-6", className)}>
+    <div className={cn("w-full", className)}>
       <div className="relative">
         {/* Track background */}
         <div
