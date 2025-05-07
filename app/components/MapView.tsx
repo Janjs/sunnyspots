@@ -10,7 +10,6 @@ import {
 } from "react"
 import mapboxgl from "mapbox-gl"
 import ShadeMap from "mapbox-gl-shadow-simulator"
-import { Sun, Moon } from "lucide-react"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
@@ -117,6 +116,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         nameElement.style.webkitBoxOrient = "vertical"
         nameElement.style.overflow = "hidden"
         nameElement.style.textOverflow = "ellipsis"
+
+        nameElement.style.visibility = "hidden" // Initially hide the label
+        nameElement.dataset.isNameLabel = "true" // Add data attribute for querying
 
         el.appendChild(nameElement)
         el.dataset.placeName = name
@@ -285,6 +287,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         }
         markers.current.push(marker)
       })
+      updateLabelVisibility()
     }
 
     const selectMarker = (marker: mapboxgl.Marker) => {
@@ -302,6 +305,16 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
       iconContainer.style.backgroundColor = bgColor
       if (iconElement) iconElement.style.color = iconColor
+
+      // Ensure selected marker's label is visible and update others
+      const nameElement = el.querySelector(
+        '[data-is-name-label="true"]'
+      ) as HTMLElement | null
+      if (nameElement) {
+        nameElement.style.visibility = "visible"
+      }
+      selectedMarker.current = marker // Set selectedMarker before calling updateLabelVisibility
+      updateLabelVisibility() // Update all labels based on new selection
     }
 
     const unselectMarker = (marker: mapboxgl.Marker) => {
@@ -319,6 +332,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
       iconContainer.style.backgroundColor = bgColor
       if (iconElement) iconElement.style.color = iconColor
+      // No need to explicitly set selectedMarker.current to null here if another selection handles it or parent deselects
+      // updateLabelVisibility will handle the change when it's called (e.g. on next selection or map move)
+      updateLabelVisibility() // Update labels when a marker is deselected
     }
 
     const addMarker = (
@@ -383,6 +399,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
       markers.current.push(marker)
       centerOnLocation(coordinates)
+      // Defer to ensure DOM elements are rendered for accurate bounding box calculation
+      setTimeout(updateLabelVisibility, 0)
     }
 
     const centerOnLocation = (coordinates: Location) => {
@@ -474,6 +492,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             selectedMarker.current = newMarker
           }
         })
+        updateLabelVisibility() // Update labels after date change
       }, 0)
     }
 
@@ -651,7 +670,20 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             onLoadingProgress(percentage)
           }
         )
+
+        // Call updateLabelVisibility after initial markers (if any) are added via addMarkers
+        // which should happen after 'load' if placesData is available early.
+        // Also, listen for map movements.
+        if (map.current) {
+          map.current.on("moveend", updateLabelVisibility)
+          map.current.on("zoomend", updateLabelVisibility)
+        }
+        // Attempt to update label visibility after everything in 'load' is done
+        setTimeout(updateLabelVisibility, 0)
       })
+
+      // Update labels once the map is truly idle for the first time
+      map.current.once("idle", updateLabelVisibility)
 
       // Cleanup
       return () => {
@@ -672,6 +704,82 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         setDate(initialDate)
       }
     }, [initialDate])
+
+    // Helper function to check for overlap between two rectangles
+    const checkOverlap = (rect1: DOMRect, rect2: DOMRect): boolean => {
+      return !(
+        rect1.right < rect2.left ||
+        rect1.left > rect2.right ||
+        rect1.bottom < rect2.top ||
+        rect1.top > rect2.bottom
+      )
+    }
+
+    // Function to update label visibility based on overlaps
+    const updateLabelVisibility = () => {
+      if (!map.current || !map.current.isStyleLoaded()) return
+
+      const visibleLabelRects: DOMRect[] = []
+
+      // First pass: Ensure selected marker's label is visible and accounted for
+      if (selectedMarker.current) {
+        const selectedEl = selectedMarker.current.getElement()
+        const selectedNameElement = selectedEl.querySelector(
+          '[data-is-name-label="true"]'
+        ) as HTMLElement | null
+
+        if (selectedNameElement) {
+          selectedNameElement.style.visibility = "visible" // Ensure it's visible
+          const rect = selectedNameElement.getBoundingClientRect()
+          // Only add to visibleLabelRects if it has actual dimensions (not 0x0)
+          if (rect.width > 0 && rect.height > 0) {
+            visibleLabelRects.push(rect)
+          }
+        }
+      }
+
+      // Second pass: Process all other markers
+      markers.current.forEach((marker) => {
+        // Skip the selected marker as it's already handled and forced visible
+        if (marker === selectedMarker.current) {
+          return
+        }
+
+        const el = marker.getElement()
+        const nameElement = el.querySelector(
+          '[data-is-name-label="true"]'
+        ) as HTMLElement | null
+
+        if (nameElement) {
+          // Temporarily make it visible to get correct dimensions if it was hidden
+          const originalVisibility = nameElement.style.visibility
+          nameElement.style.visibility = "visible"
+          const rect = nameElement.getBoundingClientRect()
+          nameElement.style.visibility = originalVisibility // Revert immediately
+
+          // Skip if the rect has no dimensions (can happen if element or map not fully ready)
+          if (rect.width === 0 || rect.height === 0) {
+            nameElement.style.visibility = "hidden" // Ensure it's hidden if no valid rect
+            return
+          }
+
+          let hasOverlap = false
+          for (const visibleRect of visibleLabelRects) {
+            if (checkOverlap(rect, visibleRect)) {
+              hasOverlap = true
+              break
+            }
+          }
+
+          if (!hasOverlap) {
+            nameElement.style.visibility = "visible"
+            visibleLabelRects.push(rect)
+          } else {
+            nameElement.style.visibility = "hidden"
+          }
+        }
+      })
+    }
 
     return <div ref={mapContainer} style={{ width: "100%", height: "100vh" }} />
   }

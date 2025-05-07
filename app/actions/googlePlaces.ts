@@ -9,6 +9,7 @@ const mapsApiUrl =
 
 // Cache durations in seconds
 const ONE_DAY_IN_SECONDS = 86400
+const ONE_HOUR_IN_SECONDS = 3600
 
 // Helper to determine if response was likely cached based on timing
 const wasResponseCached = (responseTime: number) => responseTime < 20 // If response took less than 20ms, it was likely cached
@@ -45,7 +46,7 @@ export async function fetchPlaceSuggestions(
       "X-Goog-Api-Key": GOOGLE_API_KEY as string,
     },
     body: JSON.stringify(body),
-    next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+    next: { revalidate: ONE_HOUR_IN_SECONDS }, // Cache for 1 hour
   })
   const endTime = Date.now()
   const responseTime = endTime - startTime
@@ -73,7 +74,7 @@ export async function fetchPlaceDetails(
       "X-Goog-Api-Key": GOOGLE_API_KEY as string,
       "Content-Type": "application/json",
     },
-    next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+    next: { revalidate: ONE_HOUR_IN_SECONDS }, // Cache for 1 hour
   })
   const endTime = Date.now()
   const responseTime = endTime - startTime
@@ -150,7 +151,7 @@ export async function searchTopOutdoorPlaces({
   )
   try {
     const response = await fetch(`${mapsApiUrl}?${params}`, {
-      next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+      next: { revalidate: ONE_HOUR_IN_SECONDS }, // Cache for 1 hour
     })
     const endTime = Date.now()
     const responseTime = endTime - startTime
@@ -200,7 +201,7 @@ export async function getPlacePhotoUrl(
   const response = await fetch(
     `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${GOOGLE_API_KEY}`,
     {
-      next: { revalidate: ONE_DAY_IN_SECONDS },
+      next: { revalidate: ONE_HOUR_IN_SECONDS },
       cache: "force-cache",
     }
   )
@@ -279,7 +280,7 @@ curl -X POST "${url}" \\
       "X-Goog-Api-Key": GOOGLE_API_KEY as string,
     },
     body: bodyString,
-    next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+    next: { revalidate: ONE_HOUR_IN_SECONDS }, // Cache for 1 hour
   })
 
   const endTime = Date.now()

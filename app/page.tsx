@@ -15,6 +15,7 @@ import type { PlaceResult } from "@/app/actions/googlePlaces"
 import { fetchPlaceDetails } from "@/actions/googlePlaces"
 import CityTitle from "@/app/components/CityTitle"
 import EditCityModal from "@/app/components/EditCityModal"
+import WeatherDisplay from "@/app/components/WeatherDisplay"
 
 // Extend PlaceResult for our needs
 interface ExtendedPlaceResult extends PlaceResult {
@@ -242,7 +243,11 @@ export default function MapUI() {
       <div className="w-1/2 flex-shrink-0 bg-background overflow-y-auto">
         <div className="flex-col gap-4 p-6">
           <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
-          <div className="space-y-2">
+          <WeatherDisplay
+            latitude={currentLocation.lat}
+            longitude={currentLocation.lng}
+          />
+          <div className="space-y-2 mt-4">
             <PlacesAutocomplete
               onPlaceSelect={handlePlaceSelect}
               defaultLocation={DEFAULT_LOCATION}
