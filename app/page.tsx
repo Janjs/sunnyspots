@@ -377,7 +377,13 @@ export default function MapUI() {
         )}
 
         {/* Time controls panel at bottom */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 p-4 rounded-lg bg-white/15 backdrop-blur-md border border-white/20 shadow-lg w-4/5 max-w-lg">
+        <div
+          className={`absolute bottom-8 z-10 p-4 rounded-lg bg-white/15 backdrop-blur-md border border-white/20 shadow-lg ${
+            isMobile
+              ? "left-4 right-4 w-auto"
+              : "left-1/2 -translate-x-1/2 w-4/5 max-w-lg"
+          }`}
+        >
           <div className="space-y-4">
             <div className="flex flex-row items-center justify-between gap-4">
               <DatePicker date={currentDate} setDate={handleDateChange} />
