@@ -12,6 +12,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
+import { useIsMobile } from "@/components/ui/use-mobile"
 
 interface InfoPanelProps {
   selectedPlace: PlaceResult | null
@@ -27,6 +28,7 @@ export default function InfoPanel({
   )
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
 
+  const isMobile = useIsMobile()
   const hasSun = selectedPlace
     ? hasSunlight(
         currentDate,
@@ -45,7 +47,11 @@ export default function InfoPanel({
   }
 
   return (
-    <div className="p-3 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg max-w-xl">
+    <div
+      className={`p-3 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg ${
+        isMobile ? "mt-24 max-w-xl" : "max-w-2xl"
+      }`}
+    >
       {selectedPlace ? (
         <div className="text-foreground">
           <h2 className="text-lg font-medium">{selectedPlace.name}</h2>
