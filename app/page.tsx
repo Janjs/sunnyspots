@@ -17,6 +17,7 @@ import CityTitle from "@/app/components/CityTitle"
 import EditCityModal from "@/app/components/EditCityModal"
 import WeatherDisplay from "@/app/components/WeatherDisplay"
 import InfoPanel from "@/app/components/InfoPanel"
+import DynamicFavicon from "@/app/components/DynamicFavicon"
 import { useIsMobile } from "@/components/ui/use-mobile"
 import {
   Sheet,
@@ -328,7 +329,7 @@ export default function MapUI() {
         >
           <div className="flex justify-between items-center">
             <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
-            <div className={isMobile ? "mt-2" : "ml-4"}>
+            <div className={`${isMobile ? "mt-2" : "ml-4"}`}>
               <WeatherDisplay
                 latitude={currentLocation.lat}
                 longitude={currentLocation.lng}
@@ -477,6 +478,13 @@ export default function MapUI() {
         onSave={handleSaveCity}
         placeholder="Enter city name e.g. Amsterdam"
         currentLocationForBias={currentLocation}
+      />
+
+      {/* Dynamic favicon that changes based on sunlight status */}
+      <DynamicFavicon
+        currentDate={currentDate}
+        latitude={currentLocation.lat}
+        longitude={currentLocation.lng}
       />
     </div>
   )
