@@ -17,6 +17,7 @@ import CityTitle from "@/app/components/CityTitle"
 import EditCityModal from "@/app/components/EditCityModal"
 import WeatherDisplay from "@/app/components/WeatherDisplay"
 import InfoPanel from "@/app/components/InfoPanel"
+import { useIsMobile } from "@/components/ui/use-mobile"
 
 // Extend PlaceResult for our needs
 interface ExtendedPlaceResult extends PlaceResult {
@@ -61,6 +62,7 @@ export default function MapUI() {
   const [placesData, setPlacesData] = useState<PlaceResult[]>([])
   const mapViewRef = useRef<MapViewRef | null>(null)
   const [isEditCityModalOpen, setIsEditCityModalOpen] = useState(false)
+  const isMobile = useIsMobile()
 
   const handlePlaceSelect = (
     place: PlaceSelectData & { address_components?: any[] }
@@ -259,11 +261,15 @@ export default function MapUI() {
           </div>
         </div>
 
-        {/* City Title and Weather Display - now in the center */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+        {/* City Title and Weather Display - now in the center or full width on mobile */}
+        <div
+          className={`absolute top-4 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg ${
+            isMobile ? "left-4 right-4 w-auto" : "left-1/2 -translate-x-1/2"
+          }`}
+        >
           <div className="flex justify-between items-center">
             <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
-            <div className="ml-4">
+            <div className={isMobile ? "mt-2" : "ml-4"}>
               <WeatherDisplay
                 latitude={currentLocation.lat}
                 longitude={currentLocation.lng}
