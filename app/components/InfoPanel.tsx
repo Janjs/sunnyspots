@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Star, Sun, Moon, ImageIcon } from "lucide-react"
+import { Star, Sun, Moon, ImageIcon, X } from "lucide-react"
 import Image from "next/image"
 import { hasSunlight } from "@/utils/sunlight"
 import {
@@ -13,15 +13,18 @@ import {
 } from "@/components/ui/carousel"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
 import { useIsMobile } from "@/components/ui/use-mobile"
+import { Button } from "@/components/ui/button"
 
 interface InfoPanelProps {
   selectedPlace: PlaceResult | null
   currentDate: Date
+  onClose?: () => void
 }
 
 export default function InfoPanel({
   selectedPlace,
   currentDate,
+  onClose,
 }: InfoPanelProps) {
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
     {}
@@ -52,116 +55,131 @@ export default function InfoPanel({
         isMobile ? "mt-24 max-w-xl" : "max-w-2xl"
       }`}
     >
-      {selectedPlace ? (
-        <div className="text-foreground">
-          <h2 className="text-lg font-medium">{selectedPlace.name}</h2>
-          <div className="flex flex-row items-center justify-between mt-2">
-            {selectedPlace.rating && (
-              <div className="flex items-center gap-1 text-sm">
-                <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                <span className="text-base">{selectedPlace.rating}</span>
-                {selectedPlace.user_ratings_total && (
-                  <span className="text-xs text-muted-foreground">
-                    ({selectedPlace.user_ratings_total})
-                  </span>
-                )}
-              </div>
-            )}
-            <div>
-              {hasSun ? (
-                <Sun className="h-6 w-6 text-yellow-400" />
-              ) : (
-                <Moon className="h-6 w-6 text-slate-400" />
+      <div className="flex-1">
+        {selectedPlace ? (
+          <div className="text-foreground">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-medium">{selectedPlace.name}</h2>
+              {onClose && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="ml-2 h-8 w-8 rounded-full hover:bg-white/30"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </Button>
               )}
             </div>
-          </div>
-
-          {selectedPlace.photos ? (
-            selectedPlace.photos.length > 0 ? (
-              <div className="mt-4 relative w-60">
-                <Carousel className="w-full">
-                  <CarouselContent>
-                    {selectedPlace.photos.map((photo, index) => {
-                      const photoRef = photo.photo_reference
-                      // Initialize loading state for this image if not already set
-                      if (loadingImages[photoRef] === undefined) {
-                        setLoadingImages((prev) => ({
-                          ...prev,
-                          [photoRef]: true,
-                        }))
-                      }
-
-                      return (
-                        <CarouselItem key={index}>
-                          <div className="relative aspect-square w-full overflow-hidden rounded-md bg-muted">
-                            {imageErrors[photoRef] ? (
-                              <div className="absolute inset-0 flex items-center justify-center bg-muted">
-                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                              </div>
-                            ) : (
-                              <>
-                                {loadingImages[photoRef] && (
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="animate-pulse text-xs text-muted-foreground">
-                                      Loading image...
-                                    </div>
-                                  </div>
-                                )}
-                                <Image
-                                  src={`/api/place/photo?reference=${encodeURIComponent(
-                                    photoRef
-                                  )}&width=800`}
-                                  alt={`${selectedPlace.name} photo ${
-                                    index + 1
-                                  }`}
-                                  fill
-                                  sizes="(max-width: 768px) 100vw, 800px"
-                                  style={{ objectFit: "cover" }}
-                                  className="rounded-md"
-                                  priority={index === 0}
-                                  onLoad={() => handleImageLoad(photoRef)}
-                                  onError={() => handleImageError(photoRef)}
-                                />
-                              </>
-                            )}
-                          </div>
-                        </CarouselItem>
-                      )
-                    })}
-                  </CarouselContent>
-                  {selectedPlace.photos.length > 1 && (
-                    <>
-                      <CarouselPrevious className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 bg-white/70 hover:bg-white/90" />
-                      <CarouselNext className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 bg-white/70 hover:bg-white/90" />
-                    </>
+            <div className="flex flex-row items-center justify-between mt-2">
+              {selectedPlace.rating && (
+                <div className="flex items-center gap-1 text-sm">
+                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
+                  <span className="text-base">{selectedPlace.rating}</span>
+                  {selectedPlace.user_ratings_total && (
+                    <span className="text-xs text-muted-foreground">
+                      ({selectedPlace.user_ratings_total})
+                    </span>
                   )}
-                </Carousel>
-                <div className="text-xs text-muted-foreground mt-1 text-right">
-                  {selectedPlace.photos.length} photo
-                  {selectedPlace.photos.length !== 1 ? "s" : ""}
                 </div>
-              </div>
-            ) : (
-              <div className="mt-4 relative aspect-square w-full flex items-center justify-center bg-muted rounded-md">
-                <div className="text-muted-foreground flex flex-col items-center">
-                  <ImageIcon className="h-8 w-8 mb-2" />
-                  <span className="text-sm">No photos available</span>
-                </div>
-              </div>
-            )
-          ) : (
-            <div className="mt-4 relative aspect-square w-full flex items-center justify-center bg-muted rounded-md">
-              <div className="animate-pulse text-muted-foreground">
-                Loading photos...
+              )}
+              <div>
+                {hasSun ? (
+                  <Sun className="h-6 w-6 text-yellow-400" />
+                ) : (
+                  <Moon className="h-6 w-6 text-slate-400" />
+                )}
               </div>
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-base text-foreground/70 italic">
-          Select a place to see details
-        </div>
-      )}
+
+            {selectedPlace.photos ? (
+              selectedPlace.photos.length > 0 ? (
+                <div className="mt-4 relative w-60">
+                  <Carousel className="w-full">
+                    <CarouselContent>
+                      {selectedPlace.photos.map((photo, index) => {
+                        const photoRef = photo.photo_reference
+                        // Initialize loading state for this image if not already set
+                        if (loadingImages[photoRef] === undefined) {
+                          setLoadingImages((prev) => ({
+                            ...prev,
+                            [photoRef]: true,
+                          }))
+                        }
+
+                        return (
+                          <CarouselItem key={index}>
+                            <div className="relative aspect-square w-full overflow-hidden rounded-md bg-muted">
+                              {imageErrors[photoRef] ? (
+                                <div className="absolute inset-0 flex items-center justify-center bg-muted">
+                                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                </div>
+                              ) : (
+                                <>
+                                  {loadingImages[photoRef] && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div className="animate-pulse text-xs text-muted-foreground">
+                                        Loading image...
+                                      </div>
+                                    </div>
+                                  )}
+                                  <Image
+                                    src={`/api/place/photo?reference=${encodeURIComponent(
+                                      photoRef
+                                    )}&width=800`}
+                                    alt={`${selectedPlace.name} photo ${
+                                      index + 1
+                                    }`}
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, 800px"
+                                    style={{ objectFit: "cover" }}
+                                    className="rounded-md"
+                                    priority={index === 0}
+                                    onLoad={() => handleImageLoad(photoRef)}
+                                    onError={() => handleImageError(photoRef)}
+                                  />
+                                </>
+                              )}
+                            </div>
+                          </CarouselItem>
+                        )
+                      })}
+                    </CarouselContent>
+                    {selectedPlace.photos.length > 1 && (
+                      <>
+                        <CarouselPrevious className="absolute left-1 top-1/2 -translate-y-1/2 h-8 w-8 bg-white/70 hover:bg-white/90" />
+                        <CarouselNext className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 bg-white/70 hover:bg-white/90" />
+                      </>
+                    )}
+                  </Carousel>
+                  <div className="text-xs text-muted-foreground mt-1 text-right">
+                    {selectedPlace.photos.length} photo
+                    {selectedPlace.photos.length !== 1 ? "s" : ""}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 relative aspect-square w-full flex items-center justify-center bg-muted rounded-md">
+                  <div className="text-muted-foreground flex flex-col items-center">
+                    <ImageIcon className="h-8 w-8 mb-2" />
+                    <span className="text-sm">No photos available</span>
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="mt-4 relative aspect-square w-full flex items-center justify-center bg-muted rounded-md">
+                <div className="animate-pulse text-muted-foreground">
+                  Loading photos...
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-base text-foreground/70 italic">
+            Select a place to see details
+          </div>
+        )}
+      </div>
     </div>
   )
 }

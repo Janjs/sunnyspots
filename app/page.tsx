@@ -67,11 +67,19 @@ export default function MapUI() {
   const [isEditCityModalOpen, setIsEditCityModalOpen] = useState(false)
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [infoPanelVisible, setInfoPanelVisible] = useState(true)
 
   // Set sidebar open state based on mobile status
   useEffect(() => {
     setSidebarOpen(!isMobile)
   }, [isMobile])
+
+  // Reset InfoPanel visibility when selectedPlace changes
+  useEffect(() => {
+    if (selectedPlace) {
+      setInfoPanelVisible(true)
+    }
+  }, [selectedPlace])
 
   const handlePlaceSelect = (
     place: PlaceSelectData & { address_components?: any[] }
@@ -124,6 +132,7 @@ export default function MapUI() {
     }
     mapViewRef.current?.selectMarkerAtLocation(coordinates)
     setSelectedPlaceId(place.place_id)
+    setInfoPanelVisible(true)
 
     if (place.place_id) {
       const existingPlace = placesData.find(
@@ -153,6 +162,7 @@ export default function MapUI() {
       }
 
       setSelectedPlaceId(placeId)
+      setInfoPanelVisible(true)
 
       if (placeId) {
         const existingPlace = placesData.find((p) => p.place_id === placeId)
@@ -164,6 +174,10 @@ export default function MapUI() {
       setSelectedPlaceId(undefined)
       setSelectedPlace(null)
     }
+  }
+
+  const handleCloseInfoPanel = () => {
+    setInfoPanelVisible(false)
   }
 
   const handlePlacesLoaded = (places: PlaceResult[]) => {
@@ -347,7 +361,13 @@ export default function MapUI() {
 
         {/* Selected place info panel */}
         <div className="absolute top-4 right-4 z-10">
-          <InfoPanel selectedPlace={selectedPlace} currentDate={currentDate} />
+          {infoPanelVisible && selectedPlace && (
+            <InfoPanel
+              selectedPlace={selectedPlace}
+              currentDate={currentDate}
+              onClose={handleCloseInfoPanel}
+            />
+          )}
         </div>
 
         {loadingPercentage > 0 && loadingPercentage < 100 && (

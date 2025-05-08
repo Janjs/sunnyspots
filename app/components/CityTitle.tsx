@@ -18,8 +18,8 @@ export default function CityTitle({
   return (
     <h1
       className={`${
-        isMobile ? "text-2xl" : "text-xl"
-      } font-semibold text-foreground flex items-center`}
+        isMobile ? "text-sm flex-col" : "text-xl  items-center"
+      } font-semibold text-foreground flex`}
     >
       <span>Sunny spots in&nbsp;</span>
       <div className="group relative flex items-center">
