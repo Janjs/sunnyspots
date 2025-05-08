@@ -259,6 +259,23 @@ export default function MapUI() {
           />
         </div>
 
+        {/* City Title and Weather Display */}
+        <div
+          className={`absolute top-4 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg ${
+            isMobile ? "left-4 right-4 w-auto" : "left-1/2 -translate-x-1/2"
+          }`}
+        >
+          <div className="flex justify-between items-center">
+            <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
+            <div className={isMobile ? "mt-2" : "ml-4"}>
+              <WeatherDisplay
+                latitude={currentLocation.lat}
+                longitude={currentLocation.lng}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Mobile sidebar with Sheet component */}
         {isMobile && (
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -266,7 +283,7 @@ export default function MapUI() {
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute left-4 top-4 z-20 bg-white/80 backdrop-blur-md rounded-lg shadow-sm overflow-hidden group"
+                className="absolute left-4 top-28 z-20 bg-white/20 backdrop-blur-md rounded-lg shadow-sm overflow-hidden group"
               >
                 <Menu className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:scale-110" />
               </Button>
@@ -327,23 +344,6 @@ export default function MapUI() {
             </div>
           </div>
         )}
-
-        {/* City Title and Weather Display */}
-        <div
-          className={`absolute top-4 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg ${
-            isMobile ? "left-14 right-4 w-auto" : "left-1/2 -translate-x-1/2"
-          }`}
-        >
-          <div className="flex justify-between items-center">
-            <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
-            <div className={isMobile ? "mt-2" : "ml-4"}>
-              <WeatherDisplay
-                latitude={currentLocation.lat}
-                longitude={currentLocation.lng}
-              />
-            </div>
-          </div>
-        </div>
 
         {/* Selected place info panel */}
         <div className="absolute top-4 right-4 z-10">
