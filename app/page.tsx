@@ -281,7 +281,7 @@ export default function MapUI() {
   // Don't render anything layout-dependent until we know the device type
   if (!layoutReady) {
     return (
-      <div className="h-screen w-full overflow-hidden">
+      <div className="h-[100dvh] w-full overflow-hidden">
         <div className="relative h-full w-full bg-background">
           {/* MapView as the base layer - this always renders */}
           <div className="absolute inset-0 z-0">
@@ -306,7 +306,7 @@ export default function MapUI() {
   }
 
   return (
-    <div className="h-screen w-full overflow-hidden">
+    <div className="h-[100dvh] w-full overflow-hidden">
       <div className="relative h-full w-full bg-background">
         {/* MapView as the base layer */}
         <div className="absolute inset-0 z-0">
