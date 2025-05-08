@@ -24,6 +24,7 @@ interface MapViewProps {
   onLoadingProgress: Dispatch<SetStateAction<number>>
   defaultLocation: Location
   initialDate: Date
+  isMobile?: boolean
   onMarkerSelected?: (
     coordinates: (Location & { place_id?: string; name?: string }) | null
   ) => void
@@ -54,7 +55,13 @@ const MAPBOX_API_KEY = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
 const MapView = forwardRef<MapViewRef, MapViewProps>(
   (
-    { onLoadingProgress, defaultLocation, initialDate, onMarkerSelected },
+    {
+      onLoadingProgress,
+      defaultLocation,
+      initialDate,
+      isMobile = false,
+      onMarkerSelected,
+    },
     ref
   ) => {
     const mapContainer = useRef<HTMLDivElement>(null)
@@ -239,7 +246,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         const marker = new mapboxgl.Marker({
           element: markerElement,
           anchor: "bottom", // Anchor to the bottom-center of the element
-          offset: [0, 0], // Reset offset, adjust if necessary for precise icon bottom alignment
+          offset: [0, isMobile ? 180 : 0], // Add offset on mobile to account for InfoPanel
         })
           .setLngLat([place.geometry.location.lng, place.geometry.location.lat])
           .addTo(map.current!)
@@ -353,7 +360,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       const marker = new mapboxgl.Marker({
         element: markerElement,
         anchor: "bottom", // Anchor to the bottom-center
-        offset: [0, 0], // Reset offset
+        offset: [0, isMobile ? -60 : 0], // Add offset on mobile to account for InfoPanel
       })
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!)
@@ -452,7 +459,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           const newMarker = new mapboxgl.Marker({
             element: newElement,
             anchor: "bottom", // Anchor to the bottom-center
-            offset: [0, 0], // Reset offset
+            offset: [0, isMobile ? -60 : 0], // Add offset on mobile to account for InfoPanel
           })
             .setLngLat([data.coords.lng, data.coords.lat])
             .addTo(map.current!)

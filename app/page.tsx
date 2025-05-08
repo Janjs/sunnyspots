@@ -18,7 +18,12 @@ import EditCityModal from "@/app/components/EditCityModal"
 import WeatherDisplay from "@/app/components/WeatherDisplay"
 import InfoPanel from "@/app/components/InfoPanel"
 import { useIsMobile } from "@/components/ui/use-mobile"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 
@@ -65,13 +70,17 @@ export default function MapUI() {
   const [placesData, setPlacesData] = useState<PlaceResult[]>([])
   const mapViewRef = useRef<MapViewRef | null>(null)
   const [isEditCityModalOpen, setIsEditCityModalOpen] = useState(false)
+  const [layoutReady, setLayoutReady] = useState(false)
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [infoPanelVisible, setInfoPanelVisible] = useState(true)
 
-  // Set sidebar open state based on mobile status
+  // Only set layout state once we've detected device type
   useEffect(() => {
-    setSidebarOpen(!isMobile)
+    if (isMobile !== undefined) {
+      setSidebarOpen(!isMobile)
+      setLayoutReady(true)
+    }
   }, [isMobile])
 
   // Reset InfoPanel visibility when selectedPlace changes
@@ -259,6 +268,33 @@ export default function MapUI() {
     closeEditCityModal()
   }
 
+  // Don't render anything layout-dependent until we know the device type
+  if (!layoutReady) {
+    return (
+      <div className="h-screen w-full overflow-hidden">
+        <div className="relative h-full w-full bg-background">
+          {/* MapView as the base layer - this always renders */}
+          <div className="absolute inset-0 z-0">
+            <MapView
+              ref={mapViewRef}
+              onLoadingProgress={setLoadingPercentage}
+              defaultLocation={currentLocation}
+              initialDate={currentDate}
+              onMarkerSelected={handleMarkerSelected}
+              isMobile={isMobile}
+            />
+          </div>
+
+          {loadingPercentage > 0 && loadingPercentage < 100 && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
+              Loading map: {loadingPercentage}%
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="h-screen w-full overflow-hidden">
       <div className="relative h-full w-full bg-background">
@@ -270,6 +306,7 @@ export default function MapUI() {
             defaultLocation={currentLocation}
             initialDate={currentDate}
             onMarkerSelected={handleMarkerSelected}
+            isMobile={isMobile}
           />
         </div>
 
@@ -293,19 +330,23 @@ export default function MapUI() {
         {/* Mobile sidebar with Sheet component */}
         {isMobile && (
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute left-4 top-28 z-20 bg-white/20 backdrop-blur-md rounded-lg shadow-sm overflow-hidden group"
-              >
-                <Menu className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:scale-110" />
-              </Button>
-            </SheetTrigger>
+            {!sidebarOpen && (
+              <SheetTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute left-4 top-28 z-20 bg-white/20 backdrop-blur-md rounded-lg shadow-sm overflow-hidden group"
+                >
+                  <Menu className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:scale-110" />
+                  <span className="sr-only">Open places menu</span>
+                </Button>
+              </SheetTrigger>
+            )}
             <SheetContent
               side="left"
               className="p-0 w-[85%] max-w-[350px] [&>button]:hidden"
             >
+              <SheetTitle className="sr-only">Places Navigation</SheetTitle>
               <div className="h-full flex p-4 gap-3 flex-col bg-white/25 backdrop-blur-md relative">
                 {/* Custom close button positioned outside the sidebar */}
                 <Button
@@ -315,6 +356,7 @@ export default function MapUI() {
                   onClick={() => setSidebarOpen(false)}
                 >
                   <X className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:rotate-90 group-hover:scale-110" />
+                  <span className="sr-only">Close menu</span>
                 </Button>
                 <div className="p-1">
                   <PlacesAutocomplete
