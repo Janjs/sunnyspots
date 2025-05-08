@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import MapView from "@/app/components/MapView"
 import { Label } from "@/components/ui/label"
 import PlacesAutocomplete, {
@@ -18,6 +18,9 @@ import EditCityModal from "@/app/components/EditCityModal"
 import WeatherDisplay from "@/app/components/WeatherDisplay"
 import InfoPanel from "@/app/components/InfoPanel"
 import { useIsMobile } from "@/components/ui/use-mobile"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Menu, X } from "lucide-react"
 
 // Extend PlaceResult for our needs
 interface ExtendedPlaceResult extends PlaceResult {
@@ -63,6 +66,12 @@ export default function MapUI() {
   const mapViewRef = useRef<MapViewRef | null>(null)
   const [isEditCityModalOpen, setIsEditCityModalOpen] = useState(false)
   const isMobile = useIsMobile()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Set sidebar open state based on mobile status
+  useEffect(() => {
+    setSidebarOpen(!isMobile)
+  }, [isMobile])
 
   const handlePlaceSelect = (
     place: PlaceSelectData & { address_components?: any[] }
@@ -239,32 +248,90 @@ export default function MapUI() {
   return (
     <div className="h-screen w-full overflow-hidden">
       <div className="relative h-full w-full bg-background">
-        {/* Left side panel with flex layout */}
-        <div className="absolute left-4 top-4 bottom-4 z-10 flex flex-col gap-4 w-96">
-          {/* Places search and top rated places */}
-          <div className="h-full flex p-4 gap-3 flex-col rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
-            <div className="p-1">
-              <PlacesAutocomplete
-                onPlaceSelect={handlePlaceSelect}
-                defaultLocation={DEFAULT_LOCATION}
-              />
-            </div>
-            <div className="flex-1 overflow-y-auto p-1">
-              <TopRatedPlaces
-                location={currentLocation}
-                dateTime={currentDate}
-                onPlaceSelect={handlePlaceFromListSelect}
-                onPlacesLoaded={handlePlacesLoaded}
-                selectedPlaceId={selectedPlaceId}
-              />
-            </div>
-          </div>
+        {/* MapView as the base layer */}
+        <div className="absolute inset-0 z-0">
+          <MapView
+            ref={mapViewRef}
+            onLoadingProgress={setLoadingPercentage}
+            defaultLocation={currentLocation}
+            initialDate={currentDate}
+            onMarkerSelected={handleMarkerSelected}
+          />
         </div>
 
-        {/* City Title and Weather Display - now in the center or full width on mobile */}
+        {/* Mobile sidebar with Sheet component */}
+        {isMobile && (
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-4 top-4 z-20 bg-white/80 backdrop-blur-md rounded-lg shadow-sm overflow-hidden group"
+              >
+                <Menu className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:scale-110" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="p-0 w-[85%] max-w-[350px] [&>button]:hidden"
+            >
+              <div className="h-full flex p-4 gap-3 flex-col bg-white/25 backdrop-blur-md relative">
+                {/* Custom close button positioned outside the sidebar */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute -right-14 top-4 bg-white/80 backdrop-blur-md rounded-lg shadow-sm overflow-hidden group"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <X className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:rotate-90 group-hover:scale-110" />
+                </Button>
+                <div className="p-1">
+                  <PlacesAutocomplete
+                    onPlaceSelect={handlePlaceSelect}
+                    defaultLocation={DEFAULT_LOCATION}
+                  />
+                </div>
+                <div className="flex-1 overflow-y-auto p-1">
+                  <TopRatedPlaces
+                    location={currentLocation}
+                    dateTime={currentDate}
+                    onPlaceSelect={handlePlaceFromListSelect}
+                    onPlacesLoaded={handlePlacesLoaded}
+                    selectedPlaceId={selectedPlaceId}
+                  />
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+
+        {/* Desktop sidebar */}
+        {!isMobile && (
+          <div className="absolute left-4 top-4 bottom-4 z-10 flex flex-col gap-4 w-96">
+            <div className="h-full flex p-4 gap-3 flex-col rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+              <div className="p-1">
+                <PlacesAutocomplete
+                  onPlaceSelect={handlePlaceSelect}
+                  defaultLocation={DEFAULT_LOCATION}
+                />
+              </div>
+              <div className="flex-1 overflow-y-auto p-1">
+                <TopRatedPlaces
+                  location={currentLocation}
+                  dateTime={currentDate}
+                  onPlaceSelect={handlePlaceFromListSelect}
+                  onPlacesLoaded={handlePlacesLoaded}
+                  selectedPlaceId={selectedPlaceId}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* City Title and Weather Display */}
         <div
           className={`absolute top-4 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg ${
-            isMobile ? "left-4 right-4 w-auto" : "left-1/2 -translate-x-1/2"
+            isMobile ? "left-14 right-4 w-auto" : "left-1/2 -translate-x-1/2"
           }`}
         >
           <div className="flex justify-between items-center">
@@ -278,18 +345,10 @@ export default function MapUI() {
           </div>
         </div>
 
-        {/* Selected place info panel - now at top-right */}
+        {/* Selected place info panel */}
         <div className="absolute top-4 right-4 z-10">
           <InfoPanel selectedPlace={selectedPlace} currentDate={currentDate} />
         </div>
-
-        <MapView
-          ref={mapViewRef}
-          onLoadingProgress={setLoadingPercentage}
-          defaultLocation={currentLocation}
-          initialDate={currentDate}
-          onMarkerSelected={handleMarkerSelected}
-        />
 
         {loadingPercentage > 0 && loadingPercentage < 100 && (
           <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
@@ -322,7 +381,6 @@ export default function MapUI() {
               onChange={(h: number) => {
                 const updatedDateTime = new Date(currentDate)
                 const whole = Math.floor(h)
-                console.log("whole", whole)
                 const mins = Math.round((h - whole) * 60)
                 const safeHour = Math.floor(h) % 24
                 updatedDateTime.setHours(safeHour, mins, 0, 0)
