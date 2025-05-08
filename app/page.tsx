@@ -149,6 +149,11 @@ export default function MapUI() {
       )
       setSelectedPlace(existingPlace || null)
     }
+
+    // Close sidebar when a place is selected
+    if (isMobile) {
+      setSidebarOpen(false)
+    }
   }
 
   const handleMarkerSelected = (
@@ -178,6 +183,11 @@ export default function MapUI() {
         setSelectedPlace(existingPlace || null)
       } else {
         setSelectedPlace(null)
+      }
+
+      // Close sidebar when a marker is selected on mobile
+      if (isMobile) {
+        setSidebarOpen(false)
       }
     } else {
       setSelectedPlaceId(undefined)
