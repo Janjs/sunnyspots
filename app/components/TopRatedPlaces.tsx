@@ -8,7 +8,6 @@ import type { PlaceResult } from "@/app/actions/googlePlaces"
 import Image from "next/image"
 import { hasSunlight } from "@/utils/sunlight"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
-import { useIsMobile } from "@/hooks/use-mobile"
 
 interface TopRatedPlacesProps {
   location: { lat: number; lng: number }
