@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { getWeather, ProcessedWeatherData } from "@/app/actions/openWeather"
 import Image from "next/image"
+import { useIsMobile } from "@/components/ui/use-mobile"
 
 interface WeatherDisplayProps {
   latitude: number
@@ -18,6 +19,7 @@ export default function WeatherDisplay({
   )
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     if (typeof latitude === "number" && typeof longitude === "number") {
@@ -66,16 +68,24 @@ export default function WeatherDisplay({
   const iconUrl = `https://openweathermap.org/img/wn/${weatherData.icon}@2x.png`
 
   return (
-    <div className="flex items-center space-x-3">
+    <div
+      className={`${
+        isMobile ? "flex-col items-end" : "flex items-center space-x-3"
+      }`}
+    >
       <div className="flex items-center">
         <Image
           src={iconUrl}
           alt={weatherData.description}
-          width={40}
-          height={40}
+          width={isMobile ? 30 : 40}
+          height={isMobile ? 30 : 40}
           className="rounded-full"
         />
-        <span className="ml-2 text-xl font-semibold text-foreground">
+        <span
+          className={`${
+            isMobile ? "text-lg" : "text-xl"
+          } font-semibold text-foreground`}
+        >
           {Math.round(weatherData.temp)}°C
         </span>
       </div>
@@ -83,7 +93,7 @@ export default function WeatherDisplay({
         <p>
           UV Index: <span className="font-bold">{weatherData.uvi}</span>
         </p>
-        <p className="capitalize">{weatherData.description}</p>
+        {!isMobile && <p className="capitalize">{weatherData.description}</p>}
       </div>
     </div>
   )

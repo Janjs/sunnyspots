@@ -246,7 +246,11 @@ export default function MapUI() {
       if (newCityData.placeId) {
         try {
           const placeDetails = await fetchPlaceDetails(newCityData.placeId)
-          if (placeDetails.geometry && placeDetails.geometry.location) {
+          if (
+            placeDetails &&
+            placeDetails.geometry &&
+            placeDetails.geometry.location
+          ) {
             const newCoords = {
               lat: placeDetails.geometry.location.lat,
               lng: placeDetails.geometry.location.lng,
@@ -323,13 +327,15 @@ export default function MapUI() {
 
         {/* City Title and Weather Display */}
         <div
-          className={`absolute top-4 z-10 px-6 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg ${
+          className={`absolute top-4 z-10 px-4 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg ${
             isMobile ? "left-4 right-4 w-auto" : "left-1/2 -translate-x-1/2"
           }`}
         >
           <div className="flex justify-between items-center">
-            <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
-            <div className={`${isMobile ? "mt-2" : "ml-4"}`}>
+            <div className={isMobile ? "ml-12" : ""}>
+              <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
+            </div>
+            <div className={isMobile ? "" : "ml-4"}>
               <WeatherDisplay
                 latitude={currentLocation.lat}
                 longitude={currentLocation.lng}
@@ -341,18 +347,16 @@ export default function MapUI() {
         {/* Mobile sidebar with Sheet component */}
         {isMobile && (
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-            {!sidebarOpen && (
-              <SheetTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute left-4 top-28 z-20 bg-white/20 backdrop-blur-md rounded-lg shadow-sm overflow-hidden group"
-                >
-                  <Menu className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:scale-110" />
-                  <span className="sr-only">Open places menu</span>
-                </Button>
-              </SheetTrigger>
-            )}
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-8 top-[2.35rem] z-20 bg-white/20 backdrop-blur-sm rounded-lg shadow-sm overflow-hidden group"
+              >
+                <Menu className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:scale-110" />
+                <span className="sr-only">Open places menu</span>
+              </Button>
+            </SheetTrigger>
             <SheetContent
               side="left"
               className="p-0 w-[85%] max-w-[350px] [&>button]:hidden"

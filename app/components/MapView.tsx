@@ -590,7 +590,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         center: { lat: defaultLocation.lat, lng: defaultLocation.lng },
         zoom: 15,
         hash: true,
-        pitch: 0,
+        pitch: 45,
       })
 
       const mapLoaded = (map: mapboxgl.Map) => {
