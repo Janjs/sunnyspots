@@ -62,50 +62,6 @@ export async function fetchPlaceSuggestions(
     : []
 }
 
-export async function fetchPlaceDetails(
-  placeId: string
-): Promise<PlaceSelectData> {
-  const startTime = Date.now()
-  console.log(`[Places API] Fetching details for place: ${placeId}`)
-  const detailsUrl = `${placesApiUrl}/${placeId}?fields=location,formattedAddress,outdoorSeating`
-  const response = await fetch(detailsUrl, {
-    method: "GET",
-    headers: {
-      "X-Goog-Api-Key": GOOGLE_API_KEY as string,
-      "Content-Type": "application/json",
-    },
-    next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
-  })
-  const endTime = Date.now()
-  const responseTime = endTime - startTime
-  console.log(
-    `[Places API] Details request completed in ${responseTime}ms (${
-      wasResponseCached(responseTime) ? "CACHE HIT" : "CACHE MISS"
-    })`
-  )
-
-  const placeDetails = await response.json()
-  const placeSelectData: PlaceSelectData = {
-    name: placeDetails.name,
-    geometry: {
-      location: {
-        lat: placeDetails.location.latitude,
-        lng: placeDetails.location.longitude,
-      },
-    },
-    formatted_address: placeDetails.formattedAddress,
-    outdoorSeating: placeDetails.outdoorSeating,
-  }
-  return placeSelectData
-}
-
-interface NearbySearchParams {
-  location: { lat: number; lng: number }
-  type?: string
-  keyword?: string
-  radius?: number
-}
-
 export interface PlaceResult {
   place_id: string
   name: string
@@ -129,6 +85,96 @@ export interface PlaceResult {
   price_level?: number
   user_ratings_total?: number
   business_status?: string
+  outdoorSeating?: boolean // Added field
+}
+
+export async function fetchPlaceDetails(
+  placeId: string
+): Promise<PlaceSelectData | null> {
+  const startTime = Date.now()
+  console.log(
+    `[Places API] Fetching details for place (for PlaceSelectData): ${placeId}`
+  )
+
+  // Fields needed for PlaceSelectData, including photos and name
+  const fields = [
+    "name", // For PlaceSelectData.name
+    "id", // Though not directly in PlaceSelectData, good to have, and some APIs return it implicitly
+    "location", // For PlaceSelectData.geometry.location
+    "formattedAddress", // For PlaceSelectData.formatted_address
+    "outdoorSeating", // For PlaceSelectData.outdoorSeating
+    "photos", // For PlaceSelectData.photos
+  ].join(",")
+
+  const detailsUrl = `${placesApiUrl}/${placeId}?fields=${fields}&languageCode=en-US`
+
+  const response = await fetch(detailsUrl, {
+    method: "GET",
+    headers: {
+      "X-Goog-Api-Key": GOOGLE_API_KEY as string,
+      "Content-Type": "application/json",
+    },
+    next: { revalidate: ONE_DAY_IN_SECONDS },
+  })
+
+  const endTime = Date.now()
+  const responseTime = endTime - startTime
+  console.log(
+    `[Places API] PlaceSelectData details request completed in ${responseTime}ms (${
+      wasResponseCached(responseTime) ? "CACHE HIT" : "CACHE MISS"
+    }) for place: ${placeId}`
+  )
+
+  if (!response.ok) {
+    console.error(
+      `[Places API] Error fetching details for ${placeId} (PlaceSelectData). Status: ${response.status}`
+    )
+    const errorBody = await response.text()
+    console.error(`[Places API] Error body: ${errorBody}`)
+    return null
+  }
+
+  const placeDetails = await response.json()
+
+  if (!placeDetails || placeDetails.error) {
+    console.error(
+      `[Places API] Error in fetched data for ${placeId} (PlaceSelectData):`,
+      placeDetails.error
+    )
+    return null
+  }
+
+  // Map API response to PlaceSelectData
+  const placeSelectData: PlaceSelectData = {
+    place_id: placeDetails.id,
+    name: placeDetails.name || placeDetails.displayName || "Name not available",
+    geometry: {
+      location: {
+        lat: placeDetails.location?.latitude || 0,
+        lng: placeDetails.location?.longitude || 0,
+      },
+    },
+    formatted_address: placeDetails.formattedAddress || "",
+    outdoorSeating: !!placeDetails.outdoorSeating, // Ensure boolean
+    photos: (placeDetails.photos || [])
+      .map((photo: any) => ({
+        photo_reference: photo.name ? photo.name.split("/").pop() : "",
+        height: photo.heightPx || 0,
+        width: photo.widthPx || 0,
+        html_attributions: (photo.authorAttributions || []).map(
+          (attr: any) => attr.displayName || ""
+        ),
+      }))
+      .filter((p: any) => p.photo_reference), // Ensure photo_reference is valid
+  }
+  return placeSelectData
+}
+
+interface NearbySearchParams {
+  location: { lat: number; lng: number }
+  type?: string
+  keyword?: string
+  radius?: number
 }
 
 export async function searchTopOutdoorPlaces({

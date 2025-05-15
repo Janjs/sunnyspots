@@ -34,12 +34,19 @@ export interface Place {
 }
 
 export interface PlaceSelectData {
+  place_id: string
   name: string
   geometry: {
     location: Location
   }
   formatted_address: string
   outdoorSeating: boolean
+  photos?: {
+    photo_reference: string
+    height: number
+    width: number
+    html_attributions: string[]
+  }[]
 }
 
 interface PlacesAutocompleteProps {
@@ -102,14 +109,24 @@ export default function PlacesAutocomplete({
       clearTimeout(debounceTimeoutRef.current)
     }
     setIsLoading(false)
+    setValue(place.structuredFormat.mainText.text)
+    setPlaces([])
 
     try {
       const placeDetails = await fetchPlaceDetails(place.placeId)
-      onPlaceSelect(placeDetails)
-      setPlaces([])
-      setValue(place.structuredFormat.mainText.text)
+      if (placeDetails) {
+        onPlaceSelect(placeDetails)
+      } else {
+        console.error(
+          "Failed to fetch place details for:",
+          place.structuredFormat.mainText.text
+        )
+      }
     } catch (error) {
-      console.error("Error fetching place details:", error)
+      console.error(
+        "Error in handleSelect after fetching place details:",
+        error
+      )
     }
   }
 
