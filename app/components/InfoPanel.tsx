@@ -148,13 +148,6 @@ export default function InfoPanel({
             )}
           </div>
 
-          {isLoadingDetails &&
-            (!displayData.photos || displayData.photos.length === 0) && (
-              <div className="w-full aspect-square flex items-center justify-center bg-muted/50 rounded-md mt-2 animate-pulse text-xs text-muted-foreground">
-                Loading images...
-              </div>
-            )}
-
           {/* Image Column / Carousel */}
           {displayData.photos && displayData.photos.length > 0 && (
             <div
@@ -184,13 +177,6 @@ export default function InfoPanel({
                             </div>
                           ) : (
                             <>
-                              {loadingImages[photoRef] && (
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <div className="animate-pulse text-xs text-muted-foreground">
-                                    Loading image...
-                                  </div>
-                                </div>
-                              )}
                               <div className="w-full h-full flex items-center justify-center">
                                 <Image
                                   src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&maxheight=800&photo_reference=${encodeURIComponent(
