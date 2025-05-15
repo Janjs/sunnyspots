@@ -2,7 +2,7 @@
 
 import { Place, PlaceSelectData } from "../components/PlacesAutocomplete"
 
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY
 const placesApiUrl = "https://places.googleapis.com/v1/places"
 const mapsApiUrl =
   "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
@@ -96,17 +96,7 @@ export async function fetchPlaceDetails(
     `[Places API] Fetching details for place (for PlaceSelectData): ${placeId}`
   )
 
-  // Fields needed for PlaceSelectData, including photos and name
-  const fields = [
-    "name", // For PlaceSelectData.name
-    "id", // Though not directly in PlaceSelectData, good to have, and some APIs return it implicitly
-    "location", // For PlaceSelectData.geometry.location
-    "formattedAddress", // For PlaceSelectData.formatted_address
-    "outdoorSeating", // For PlaceSelectData.outdoorSeating
-    "photos", // For PlaceSelectData.photos
-  ].join(",")
-
-  const detailsUrl = `${placesApiUrl}/${placeId}?fields=${fields}&languageCode=en-US`
+  const detailsUrl = `${placesApiUrl}/${placeId}?fields=name,id,location,formattedAddress,outdoorSeating,photos&languageCode=en-US`
 
   const response = await fetch(detailsUrl, {
     method: "GET",
@@ -238,26 +228,6 @@ export async function searchTopOutdoorPlaces({
     console.error("Error fetching nearby places:", error)
     throw error
   }
-}
-
-export async function getPlacePhotoUrl(
-  photoReference: string,
-  size: number = 400
-): Promise<string> {
-  const response = await fetch(
-    `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${size}&maxheight=${size}&photo_reference=${photoReference}&key=${GOOGLE_API_KEY}`,
-    {
-      next: { revalidate: ONE_DAY_IN_SECONDS },
-      cache: "force-cache",
-    }
-  )
-
-  const arrayBuffer = await response.arrayBuffer()
-  const buffer = Buffer.from(arrayBuffer)
-
-  const base64Image = buffer.toString("base64")
-  const contentType = response.headers.get("content-type") || "image/jpeg"
-  return `data:${contentType};base64,${base64Image}`
 }
 
 // Add new interface for CitySuggestion

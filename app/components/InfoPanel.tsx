@@ -193,9 +193,11 @@ export default function InfoPanel({
                               )}
                               <div className="w-full h-full flex items-center justify-center">
                                 <Image
-                                  src={`/api/place/photo?reference=${encodeURIComponent(
+                                  src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&maxheight=800&photo_reference=${encodeURIComponent(
                                     photoRef
-                                  )}&size=800`}
+                                  )}&key=${
+                                    process.env.NEXT_PUBLIC_GOOGLE_API_KEY
+                                  }`}
                                   alt={`${displayData.name} photo ${index + 1}`}
                                   width={800}
                                   height={800}

@@ -38,9 +38,9 @@ const PlaceCard = ({
 }) => {
   const photoReference = place.photos?.[0]?.photo_reference
   const photoUrl = photoReference
-    ? `/api/place/photo?reference=${encodeURIComponent(
+    ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&maxheight=400&photo_reference=${encodeURIComponent(
         photoReference
-      )}&size=400`
+      )}&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
     : undefined
 
   const hasSun = hasSunlight(
@@ -90,7 +90,7 @@ const PlaceCard = ({
               <div></div>
               <div className="flex justify-between items-end w-full">
                 <div>
-                  <CardTitle className="text-base font-bold text-white transition-colors">
+                  <CardTitle className="text-base font-bold text-white transition-colors line-clamp-3">
                     {place.name}
                   </CardTitle>
                   <p className="text-xs text-blue-100 mt-0.5">
