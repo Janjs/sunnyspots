@@ -413,7 +413,11 @@ export default function MapUI() {
         )}
 
         {/* Selected place info panel */}
-        <div className="absolute top-4 right-4 z-10">
+        <div
+          className={`absolute top-4 z-10 ${
+            isMobile ? "left-0 right-0 px-4" : "right-4"
+          }`}
+        >
           {infoPanelVisible && selectedPlace && (
             <InfoPanel
               selectedPlace={selectedPlace}

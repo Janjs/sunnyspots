@@ -196,10 +196,10 @@ export async function searchTopOutdoorPlaces({
 
 export async function getPlacePhotoUrl(
   photoReference: string,
-  maxWidth: number = 400
+  size: number = 400
 ): Promise<string> {
   const response = await fetch(
-    `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${GOOGLE_API_KEY}`,
+    `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${size}&maxheight=${size}&photo_reference=${photoReference}&key=${GOOGLE_API_KEY}`,
     {
       next: { revalidate: ONE_DAY_IN_SECONDS },
       cache: "force-cache",
@@ -208,6 +208,7 @@ export async function getPlacePhotoUrl(
 
   const arrayBuffer = await response.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
+
   const base64Image = buffer.toString("base64")
   const contentType = response.headers.get("content-type") || "image/jpeg"
   return `data:${contentType};base64,${base64Image}`

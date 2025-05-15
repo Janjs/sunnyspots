@@ -40,7 +40,7 @@ const PlaceCard = ({
   const photoUrl = photoReference
     ? `/api/place/photo?reference=${encodeURIComponent(
         photoReference
-      )}&width=400`
+      )}&size=400`
     : undefined
 
   const hasSun = hasSunlight(
@@ -69,6 +69,10 @@ const PlaceCard = ({
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 priority={false}
+                className="object-cover object-center"
+                style={{
+                  objectPosition: "center center",
+                }}
               />
               <div
                 className={`absolute inset-0 bg-gradient-to-t ${
