@@ -29,6 +29,14 @@ interface PlaceWithPhoto extends PlaceResult {
   type: PlaceType
 }
 
+const PLACE_TYPE_TABS: { label: string; value: PlaceType | "all" }[] = [
+  { label: "All", value: "all" },
+  { label: "Restaurant", value: PlaceType.Restaurant },
+  { label: "Bar", value: PlaceType.Bar },
+  { label: "Park", value: PlaceType.Park },
+  { label: "Cafe", value: PlaceType.Cafe },
+]
+
 const PlaceCard = ({
   place,
   onClick,
@@ -142,6 +150,9 @@ export default function TopRatedPlaces({
   dateTime,
   selectedPlaceId,
 }: TopRatedPlacesProps) {
+  const [selectedPlaceType, setSelectedPlaceType] = useState<PlaceType | "all">(
+    "all"
+  )
   const [places, setPlaces] = useState<PlaceWithPhoto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -195,6 +206,12 @@ export default function TopRatedPlaces({
     })
   }
 
+  // Filter places by selected type
+  const filteredPlaces =
+    selectedPlaceType === "all"
+      ? places
+      : places.filter((p) => p.type === selectedPlaceType)
+
   if (loading) {
     return (
       <div className="p-4 text-muted-foreground">Loading top places...</div>
@@ -207,11 +224,36 @@ export default function TopRatedPlaces({
 
   return (
     <div>
-      {places.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No places found nearby</p>
+      {/* PlaceType Tabs */}
+      <div
+        className="flex gap-2 mb-4 overflow-x-auto tab-scrollbar-hide -mx-2 px-2"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
+        {PLACE_TYPE_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            className={`px-4 py-1 rounded-full text-sm font-medium transition-colors whitespace-nowrap
+              ${
+                selectedPlaceType === tab.value
+                  ? "bg-white/60 border-0"
+                  : "bg-transparent  hover:bg-white/50 border-0"
+              }
+              `}
+            onClick={() => setSelectedPlaceType(tab.value)}
+            aria-pressed={selectedPlaceType === tab.value}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      {filteredPlaces.length === 0 ? (
+        <p className="text-sm m-4 text-muted-foreground">
+          No places found nearby
+        </p>
       ) : (
         <div className="grid gap-4 grid-cols-1">
-          {places.map((place) => (
+          {filteredPlaces.map((place) => (
             <PlaceCard
               key={place.place_id}
               place={place}

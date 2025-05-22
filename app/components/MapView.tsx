@@ -107,12 +107,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       name?: string,
       type?: string
     ) => {
-      console.log(
-        "[MapView] createMarkerElement - Input Name:",
-        name,
-        "Input Type:",
-        type
-      )
       const el = document.createElement("div")
       el.style.display = "flex"
       el.style.flexDirection = "column" // Stack name and icon vertically
@@ -164,8 +158,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         coordinates.lat,
         coordinates.lng
       )
-
-      if (type) console.log("[MapView] Using place type:", type)
 
       let iconSVG = ""
       let bgColor = hasSun ? "rgb(59, 130, 246)" : "rgb(55, 65, 81)" // blue-500 or gray-700
@@ -270,7 +262,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       iconContainer.dataset.iconColor = originalIconColor
       if (type) {
         iconContainer.dataset.type = type
-        console.log("[MapView] Storing type in dataset:", type)
       }
 
       el.appendChild(iconContainer)
@@ -296,14 +287,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       }[]
     ) => {
       clearMarkers()
-      console.log("[MapView] Adding markers:", places)
       places.forEach((place) => {
-        console.log(
-          "[MapView] Processing place:",
-          place.name,
-          "with type:",
-          place.type
-        )
         const markerElement = createMarkerElement(
           place.geometry.location,
           place.name,

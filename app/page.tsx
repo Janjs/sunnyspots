@@ -28,6 +28,13 @@ import {
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import { PlaceType } from "./types/places"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
 
 // Extend PlaceResult for our needs
 interface ExtendedPlaceResult extends PlaceResult {
