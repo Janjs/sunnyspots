@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Star, Sun, Moon } from "lucide-react"
+import { Star, Sun, Moon, Utensils, Martini, Trees } from "lucide-react"
 import { searchTopOutdoorPlaces } from "@/app/actions/googlePlaces"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
 import Image from "next/image"
 import { hasSunlight } from "@/utils/sunlight"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
+import { PlaceType } from "@/app/types/places"
 
 interface TopRatedPlacesProps {
   location: { lat: number; lng: number }
@@ -48,6 +49,17 @@ const PlaceCard = ({
     place.geometry.location.lat,
     place.geometry.location.lng
   )
+
+  const getPlaceIcon = (placeTypes: string[] | undefined) => {
+    if (!placeTypes || placeTypes.length === 0) return null
+    if (placeTypes.includes(PlaceType.Park))
+      return <Trees className="h-4 w-4 text-green-300 ml-1" />
+    if (placeTypes.includes(PlaceType.Restaurant))
+      return <Utensils className="h-4 w-4 text-orange-300 ml-1" />
+    if (placeTypes.includes(PlaceType.Bar))
+      return <Martini className="h-4 w-4 text-purple-300 ml-1" />
+    return null
+  }
 
   return (
     <Card
@@ -97,11 +109,12 @@ const PlaceCard = ({
                     {place.vicinity}
                   </p>
                 </div>
-                <div className="min-w-4 min-h-4">
+                <div className="min-w-4 min-h-4 flex items-center">
+                  {getPlaceIcon(place.types)}
                   {hasSun ? (
-                    <Sun className="h-4 w-4 text-yellow-100" />
+                    <Sun className="h-4 w-4 text-yellow-100 ml-1" />
                   ) : (
-                    <Moon className="h-4 w-4 text-slate-400" />
+                    <Moon className="h-4 w-4 text-slate-400 ml-1" />
                   )}
                 </div>
               </div>
@@ -143,8 +156,6 @@ export default function TopRatedPlaces({
       try {
         const results = await searchTopOutdoorPlaces({
           location,
-          type: "restaurant,bar",
-          keyword: "outdoor seating",
         })
 
         const topPlaces = results.map((place) => ({

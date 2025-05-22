@@ -1,6 +1,7 @@
 "use server"
 
 import { Place, PlaceSelectData } from "../components/PlacesAutocomplete"
+import { PlaceType } from "@/app/types/places"
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY
 const placesApiUrl = "https://places.googleapis.com/v1/places"
@@ -17,7 +18,7 @@ const wasResponseCached = (responseTime: number) => responseTime < 20 // If resp
 export async function fetchPlaceSuggestions(
   query: string,
   location: { lat: number; lng: number },
-  types: string[] = ["restaurant", "bar"] // Allow types to be passed
+  types: string[] = [PlaceType.Restaurant, PlaceType.Bar, PlaceType.Park] // Allow types to be passed
 ): Promise<Place[]> {
   const startTime = Date.now()
   const body = {
@@ -86,6 +87,7 @@ export interface PlaceResult {
   user_ratings_total?: number
   business_status?: string
   outdoorSeating?: boolean // Added field
+  types?: string[] // Added to store place types
 }
 
 export async function fetchPlaceDetails(
@@ -169,8 +171,8 @@ interface NearbySearchParams {
 
 export async function searchTopOutdoorPlaces({
   location,
-  type = "restaurant",
-  keyword = "outdoor seating",
+  type = `${PlaceType.Restaurant},${PlaceType.Bar},${PlaceType.Park}`,
+  keyword = "outdoor seating", // This keyword might not be ideal for parks. We may need to adjust this.
   radius = 1500,
 }: NearbySearchParams): Promise<PlaceResult[]> {
   const startTime = Date.now()
@@ -209,6 +211,7 @@ export async function searchTopOutdoorPlaces({
       )
     }
 
+    // Add the main type of the place to the result for icon display
     return (data.results || []).map((place: any) => ({
       place_id: place.place_id,
       name: place.name,
@@ -223,6 +226,7 @@ export async function searchTopOutdoorPlaces({
       photos: place.photos,
       user_ratings_total: place.user_ratings_total,
       business_status: place.business_status,
+      types: place.types, // Store the types from the API response
     }))
   } catch (error) {
     console.error("Error fetching nearby places:", error)

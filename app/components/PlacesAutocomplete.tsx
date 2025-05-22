@@ -31,6 +31,7 @@ export interface Place {
       text: string
     }
   }
+  types?: string[]
 }
 
 export interface PlaceSelectData {
@@ -139,7 +140,7 @@ export default function PlacesAutocomplete({
             ref={inputRef}
             value={value}
             onValueChange={handleSearch}
-            placeholder="Search bars and restaurants..."
+            placeholder="Search bars, restaurants, parks..."
             className={cn(
               "flex h-9 w-full rounded-md bg-transparent py-2 text-sm outline-none appearance-none",
               "placeholder:text-muted-foreground text-foreground",
