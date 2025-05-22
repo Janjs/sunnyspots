@@ -14,6 +14,7 @@ import "mapbox-gl/dist/mapbox-gl.css"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 import { hasSunlight } from "@/utils/sunlight"
+import { PlaceType } from "@/app/types/places"
 
 interface Location {
   lat: number
@@ -26,7 +27,13 @@ interface MapViewProps {
   initialDate: Date
   isMobile?: boolean
   onMarkerSelected?: (
-    coordinates: (Location & { place_id?: string; name?: string }) | null
+    coordinates:
+      | (Location & {
+          place_id?: string
+          name?: string
+          types?: string[]
+        })
+      | null
   ) => void
 }
 
@@ -34,7 +41,8 @@ interface MapViewRef {
   addMarker: (
     coordinates: Location,
     outdoorSeating: boolean,
-    name?: string
+    name?: string,
+    types?: string[]
   ) => void
   setDate: (date: Date) => void
   clearMarkers: () => void
@@ -44,6 +52,7 @@ interface MapViewRef {
       outdoorSeating: boolean
       place_id?: string
       name?: string
+      types?: string[]
     }[]
   ) => void
   centerOnLocation: (coordinates: Location) => void
@@ -52,6 +61,14 @@ interface MapViewRef {
 
 const SHADEMAP_API_KEY = process.env.NEXT_PUBLIC_SHADEMAP_API_KEY
 const MAPBOX_API_KEY = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+
+// SVG Icons
+const parkIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trees"><path d="M10 10v.2A3 3 0 0 1 7 13H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-3a3 3 0 0 1-3-2.8V10a2 2 0 0 0-4 0z"/><path d="M7 14h0"/><path d="M17 14h0"/></svg>`
+const restaurantIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-utensils"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Z"/></svg>`
+const barIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-martini"><path d="M8 22h8"/><path d="M12 11v11"/><path d="m19 3-7 8-7-8Z"/></svg>`
+const cafeIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-coffee"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>`
+const sunIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/></svg>`
+const moonIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`
 
 const MapView = forwardRef<MapViewRef, MapViewProps>(
   (
@@ -71,7 +88,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const currentDate = useRef<Date>(initialDate)
     const selectedMarker = useRef<mapboxgl.Marker | null>(null)
     const markerData = useRef<
-      Map<string, { name?: string; place_id?: string }>
+      Map<string, { name?: string; place_id?: string; types?: string[] }>
     >(new Map())
 
     useEffect(() => {
@@ -85,7 +102,11 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       }
     }, [defaultLocation]) // Re-run effect when defaultLocation changes
 
-    const createMarkerElement = (coordinates: Location, name?: string) => {
+    const createMarkerElement = (
+      coordinates: Location,
+      name?: string,
+      types?: string[]
+    ) => {
       const el = document.createElement("div")
       el.style.display = "flex"
       el.style.flexDirection = "column" // Stack name and icon vertically
@@ -138,70 +159,86 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         coordinates.lng
       )
 
+      let iconSVG = hasSun ? sunIconSVG : moonIconSVG
+      let bgColor = hasSun ? "rgb(59, 130, 246)" : "rgb(55, 65, 81)" // blue-500 or gray-700
+      let iconColor = hasSun ? "#fef9c3" : "#94a3b8" // yellow-100 or slate-400
+
+      const primaryType = types?.find(
+        (type) =>
+          type === PlaceType.Park ||
+          type === PlaceType.Restaurant ||
+          type === PlaceType.Bar ||
+          type === PlaceType.Cafe
+      )
+
+      if (primaryType) {
+        el.dataset.placeType = primaryType // Store primary type for potential styling
+        switch (primaryType) {
+          case PlaceType.Park:
+            iconSVG = parkIconSVG
+            bgColor = "rgb(34, 197, 94)" // green-500
+            iconColor = "#dcfce7" // green-100
+            break
+          case PlaceType.Restaurant:
+            iconSVG = restaurantIconSVG
+            bgColor = "rgb(249, 115, 22)" // orange-500
+            iconColor = "#ffedd5" // orange-100
+            break
+          case PlaceType.Bar:
+            iconSVG = barIconSVG
+            bgColor = "rgb(168, 85, 247)" // purple-500
+            iconColor = "#f3e8ff" // purple-100
+            break
+          case PlaceType.Cafe:
+            iconSVG = cafeIconSVG
+            bgColor = "rgb(161, 98, 7)" // yellow-700 (like coffee)
+            iconColor = "#fefce8" // yellow-50
+            break
+        }
+      }
+
       iconContainer.className = cn(
         buttonVariants({ variant: "secondary", size: "icon" }),
-        "rounded-full shadow-md hover:bg-white/90 relative",
-        hasSun ? "bg-blue-500" : "bg-gray-700"
+        "rounded-full shadow-md hover:bg-white/90 relative"
       )
+      iconContainer.style.backgroundColor = bgColor
       iconContainer.style.width = "1.5rem"
       iconContainer.style.height = "1.5rem"
       iconContainer.style.padding = "0.15rem"
       iconContainer.style.display = "flex"
       iconContainer.style.justifyContent = "center"
       iconContainer.style.alignItems = "center"
-      // iconContainer.style.transform = "translate(-50%, -50%)"; // Already handled by Mapbox for the marker element itself if centered
 
-      // Add icon based on sunlight status
       const iconElement = document.createElement("div")
-      iconElement.innerHTML = hasSun
-        ? `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun">
-            <circle cx="12" cy="12" r="5"/>
-            <path d="M12 2v2"/>
-            <path d="M12 20v2"/>
-            <path d="M4.93 4.93l1.41 1.41"/>
-            <path d="M17.66 17.66l1.41 1.41"/>
-            <path d="M2 12h2"/>
-            <path d="M20 12h2"/>
-            <path d="M4.93 19.07l1.41-1.41"/>
-            <path d="M17.66 6.34l1.41-1.41"/>
-          </svg>`
-        : `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon">
-            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-          </svg>`
-
-      iconElement.style.color = hasSun ? "#fef9c3" : "#94a3b8"
+      iconElement.innerHTML = iconSVG
+      iconElement.style.color = iconColor
       iconElement.style.display = "flex"
       iconElement.style.justifyContent = "center"
       iconElement.style.alignItems = "center"
 
       iconContainer.appendChild(iconElement)
 
-      // Store original colors for flipping
-      const originalBgColor = hasSun ? "rgb(59, 130, 246)" : "rgb(55, 65, 81)" // blue-500 or gray-700
-      const originalIconColor = hasSun ? "#fef9c3" : "#94a3b8" // yellow or slate
+      const originalBgColor = bgColor
+      const originalIconColor = iconColor
 
-      // Add hover event to flip colors
       iconContainer.addEventListener("mouseenter", () => {
         iconContainer.style.backgroundColor = originalIconColor
         iconElement.style.color = originalBgColor
       })
 
       iconContainer.addEventListener("mouseleave", () => {
-        // Only reset if not selected
         if (!iconContainer.classList.contains("marker-selected")) {
           iconContainer.style.backgroundColor = originalBgColor
           iconElement.style.color = originalIconColor
         }
       })
 
-      // Store sunlight status as data attribute for later reference
-      iconContainer.dataset.hasSun = hasSun.toString()
+      iconContainer.dataset.hasSun = hasSun.toString() // Still useful for generic sun/moon state if no type
       iconContainer.dataset.bgColor = originalBgColor
       iconContainer.dataset.iconColor = originalIconColor
+      if (types) iconContainer.dataset.types = JSON.stringify(types)
 
       el.appendChild(iconContainer)
-
-      // Set a data attribute for the entire element for easy access
       el.dataset.markerElement = "true"
 
       return el
@@ -220,74 +257,73 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         outdoorSeating: boolean
         place_id?: string
         name?: string
+        types?: string[]
       }[]
     ) => {
       clearMarkers()
       places.forEach((place) => {
         const markerElement = createMarkerElement(
           place.geometry.location,
-          place.name
+          place.name,
+          place.types
         )
 
-        // Store place_id and name as data attribute for reference
         const coords = place.geometry.location
         const coordKey = `${coords.lat.toFixed(6)},${coords.lng.toFixed(6)}`
         markerElement.dataset.coordKey = coordKey
+        const currentMarkerData: {
+          name?: string
+          place_id?: string
+          types?: string[]
+        } = { name: place.name, types: place.types }
         if (place.place_id) {
           markerElement.dataset.placeId = place.place_id
-          markerData.current.set(coordKey, {
-            name: place.name,
-            place_id: place.place_id,
-          })
-        } else {
-          markerData.current.set(coordKey, { name: place.name })
+          currentMarkerData.place_id = place.place_id
         }
+        markerData.current.set(coordKey, currentMarkerData)
 
         const marker = new mapboxgl.Marker({
           element: markerElement,
-          anchor: "bottom", // Anchor to the bottom-center of the element
-          offset: [0, isMobile ? 180 : 0], // Add offset on mobile to account for InfoPanel
+          anchor: "bottom",
+          offset: [0, isMobile ? 180 : 0],
         })
           .setLngLat([place.geometry.location.lng, place.geometry.location.lat])
           .addTo(map.current!)
 
-        // Add click handler to marker
         const iconContainer = markerElement.querySelector(
-          "div[data-has-sun]"
-        ) as HTMLElement
+          "div[data-bg-color]"
+        ) as HTMLElement // Use a more generic selector like data-bg-color
         if (iconContainer) {
           iconContainer.addEventListener("click", () => {
             if (selectedMarker.current === marker) {
-              // Deselect if already selected
               unselectMarker(selectedMarker.current)
               selectedMarker.current = null
-              // Notify parent component
               onMarkerSelected?.(null)
             } else {
-              // Unselect previous marker if any
               if (selectedMarker.current) {
                 unselectMarker(selectedMarker.current)
               }
-
-              // Select this marker
               selectMarker(marker)
               selectedMarker.current = marker
-
-              // Center the map on the marker
               const lngLat = marker.getLngLat()
               map.current?.panTo([lngLat.lng, lngLat.lat], {
                 duration: 1000,
               })
-
-              // Notify parent component with precise coordinates and place_id if available
               const placeId = marker.getElement().dataset.placeId
               const placeName = marker.getElement().dataset.placeName
+              const placeTypesString = (
+                marker.getElement().querySelector("[data-types]") as HTMLElement
+              )?.dataset.types
+              const placeTypes = placeTypesString
+                ? JSON.parse(placeTypesString)
+                : undefined
 
               onMarkerSelected?.({
                 lat: parseFloat(lngLat.lat.toFixed(6)),
                 lng: parseFloat(lngLat.lng.toFixed(6)),
                 place_id: placeId,
                 name: placeName,
+                types: placeTypes,
               })
             }
           })
@@ -299,12 +335,15 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
     const selectMarker = (marker: mapboxgl.Marker) => {
       const el = marker.getElement()
-      el.style.zIndex = "1000" // Bring to front
+      el.style.zIndex = "1000"
 
-      const iconContainer = el.querySelector("div[data-has-sun]") as HTMLElement
+      const iconContainer = el.querySelector(
+        "div[data-bg-color]"
+      ) as HTMLElement
       if (!iconContainer) return
 
-      const iconElement = iconContainer.querySelector("div") as HTMLElement
+      const iconElement = iconContainer.querySelector("div svg")
+        ?.parentElement as HTMLElement // target the div containing svg
       iconContainer.classList.add("marker-selected")
 
       const bgColor = iconContainer.dataset.iconColor || ""
@@ -313,25 +352,27 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       iconContainer.style.backgroundColor = bgColor
       if (iconElement) iconElement.style.color = iconColor
 
-      // Ensure selected marker's label is visible and update others
       const nameElement = el.querySelector(
         '[data-is-name-label="true"]'
       ) as HTMLElement | null
       if (nameElement) {
         nameElement.style.visibility = "visible"
       }
-      selectedMarker.current = marker // Set selectedMarker before calling updateLabelVisibility
-      updateLabelVisibility() // Update all labels based on new selection
+      selectedMarker.current = marker
+      updateLabelVisibility()
     }
 
     const unselectMarker = (marker: mapboxgl.Marker) => {
       const el = marker.getElement()
-      el.style.zIndex = "0" // Reset z-index
+      el.style.zIndex = "0"
 
-      const iconContainer = el.querySelector("div[data-has-sun]") as HTMLElement
+      const iconContainer = el.querySelector(
+        "div[data-bg-color]"
+      ) as HTMLElement
       if (!iconContainer) return
 
-      const iconElement = iconContainer.querySelector("div") as HTMLElement
+      const iconElement = iconContainer.querySelector("div svg")
+        ?.parentElement as HTMLElement
       iconContainer.classList.remove("marker-selected")
 
       const bgColor = iconContainer.dataset.bgColor || ""
@@ -339,66 +380,65 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
       iconContainer.style.backgroundColor = bgColor
       if (iconElement) iconElement.style.color = iconColor
-      // No need to explicitly set selectedMarker.current to null here if another selection handles it or parent deselects
-      // updateLabelVisibility will handle the change when it's called (e.g. on next selection or map move)
-      updateLabelVisibility() // Update labels when a marker is deselected
+      updateLabelVisibility()
     }
 
     const addMarker = (
       coordinates: Location,
       outdoorSeating: boolean,
-      name?: string
+      name?: string,
+      types?: string[]
     ) => {
       clearMarkers()
-      const markerElement = createMarkerElement(coordinates, name)
+      const markerElement = createMarkerElement(coordinates, name, types)
       const coordKey = `${coordinates.lat.toFixed(6)},${coordinates.lng.toFixed(
         6
       )}`
-      markerData.current.set(coordKey, { name })
+      markerData.current.set(coordKey, { name, types })
       if (name) markerElement.dataset.placeName = name
+      // place_id is not available in this specific addMarker function, only name and types
 
       const marker = new mapboxgl.Marker({
         element: markerElement,
-        anchor: "bottom", // Anchor to the bottom-center
-        offset: [0, isMobile ? -60 : 0], // Add offset on mobile to account for InfoPanel
+        anchor: "bottom",
+        offset: [0, isMobile ? -60 : 0],
       })
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!)
 
-      // Add click handler to marker icon
       const iconContainer = markerElement.querySelector(
-        "div[data-has-sun]"
+        "div[data-bg-color]"
       ) as HTMLElement
       if (iconContainer) {
         iconContainer.addEventListener("click", () => {
           if (selectedMarker.current === marker) {
-            // Deselect if already selected
             unselectMarker(selectedMarker.current)
             selectedMarker.current = null
-            // Notify parent component
             onMarkerSelected?.(null)
           } else {
-            // Unselect previous marker if any
             if (selectedMarker.current) {
               unselectMarker(selectedMarker.current)
             }
-
-            // Select this marker
             selectMarker(marker)
             selectedMarker.current = marker
-
-            // Center the map on the marker
             const lngLat = marker.getLngLat()
             map.current?.panTo([lngLat.lng, lngLat.lat], {
               duration: 1000,
             })
-
-            // Notify parent component with precise coordinates
             const placeName = marker.getElement().dataset.placeName
+            const placeTypesString = (
+              marker.getElement().querySelector("[data-types]") as HTMLElement
+            )?.dataset.types
+            const placeTypes = placeTypesString
+              ? JSON.parse(placeTypesString)
+              : undefined
+
             onMarkerSelected?.({
               lat: parseFloat(lngLat.lat.toFixed(6)),
               lng: parseFloat(lngLat.lng.toFixed(6)),
               name: placeName,
+              types: placeTypes,
+              // place_id is not available here
             })
           }
         })
@@ -406,7 +446,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
       markers.current.push(marker)
       centerOnLocation(coordinates)
-      // Defer to ensure DOM elements are rendered for accurate bounding box calculation
       setTimeout(updateLabelVisibility, 0)
     }
 
@@ -421,12 +460,12 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       if (shadeMap.current) {
         shadeMap.current.setDate(date)
       }
-      // Defer marker updates to avoid conflict with ShadeMap update
       setTimeout(() => {
         const existingMarkersData: {
           coords: { lat: number; lng: number }
           name?: string
           place_id?: string
+          types?: string[]
           isSelected: boolean
         }[] = []
 
@@ -438,19 +477,24 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             coords: { lat: lngLat.lat, lng: lngLat.lng },
             name: data?.name,
             place_id: data?.place_id,
+            types: data?.types,
             isSelected: selectedMarker.current === marker,
           })
-          marker.remove() // Remove old marker
+          marker.remove()
         })
 
         markers.current = []
         selectedMarker.current = null
-        // markerData.current remains as it was, just used for lookup
 
         existingMarkersData.forEach((data) => {
-          const newElement = createMarkerElement(data.coords, data.name)
+          const newElement = createMarkerElement(
+            data.coords,
+            data.name,
+            data.types
+          )
           if (data.place_id) newElement.dataset.placeId = data.place_id
           if (data.name) newElement.dataset.placeName = data.name
+          // types are intrinsically handled by createMarkerElement and stored if needed by data-types attribute
           const coordKey = `${data.coords.lat.toFixed(
             6
           )},${data.coords.lng.toFixed(6)}`
@@ -458,14 +502,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
           const newMarker = new mapboxgl.Marker({
             element: newElement,
-            anchor: "bottom", // Anchor to the bottom-center
-            offset: [0, isMobile ? -60 : 0], // Add offset on mobile to account for InfoPanel
+            anchor: "bottom",
+            offset: [0, isMobile ? -60 : 0],
           })
             .setLngLat([data.coords.lng, data.coords.lat])
             .addTo(map.current!)
 
           const iconContainer = newElement.querySelector(
-            "div[data-has-sun]"
+            "div[data-bg-color]"
           ) as HTMLElement
           if (iconContainer) {
             iconContainer.addEventListener("click", () => {
@@ -482,11 +526,19 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
                 const lngLat = newMarker.getLngLat()
                 const placeId = newElement.dataset.placeId
                 const placeName = newElement.dataset.placeName
+                const placeTypesString = (
+                  newElement.querySelector("[data-types]") as HTMLElement
+                )?.dataset.types
+                const placeTypes = placeTypesString
+                  ? JSON.parse(placeTypesString)
+                  : undefined
+
                 onMarkerSelected?.({
                   lat: parseFloat(lngLat.lat.toFixed(6)),
                   lng: parseFloat(lngLat.lng.toFixed(6)),
                   place_id: placeId,
                   name: placeName,
+                  types: placeTypes,
                 })
               }
             })
@@ -499,14 +551,13 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             selectedMarker.current = newMarker
           }
         })
-        updateLabelVisibility() // Update labels after date change
+        updateLabelVisibility()
       }, 0)
     }
 
     const handleMouseMove = (event: MouseEvent) => {
       if (event.metaKey) {
-        // Check if cmd key is pressed
-        const pitchChange = event.movementY * 0.1 // Adjust pitch based on vertical mouse movement
+        const pitchChange = event.movementY * 0.1
         const newPitch = Math.max(
           0,
           Math.min(map.current!.getPitch() - pitchChange, 60)
@@ -523,14 +574,10 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     }, [])
 
     const selectMarkerAtLocation = (coordinates: Location) => {
-      // Find the marker closest to the given coordinates
       let foundMarker: mapboxgl.Marker | null = null
 
       markers.current.forEach((marker) => {
         const markerPos = marker.getLngLat()
-
-        // Use a more precise comparison by comparing rounded values
-        // This ensures consistency between the marker selection and the coordinate mapping
         if (
           markerPos.lng.toFixed(6) === coordinates.lng.toFixed(6) &&
           markerPos.lat.toFixed(6) === coordinates.lat.toFixed(6)
@@ -540,32 +587,32 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       })
 
       if (foundMarker) {
-        // Unselect previous marker if any
         if (selectedMarker.current && selectedMarker.current !== foundMarker) {
           unselectMarker(selectedMarker.current)
         }
-
-        // Select the found marker
         selectMarker(foundMarker)
         selectedMarker.current = foundMarker
-
-        // Center the map on the marker
         const marker = foundMarker as mapboxgl.Marker
         const lngLat = marker.getLngLat()
         map.current?.panTo([lngLat.lng, lngLat.lat], {
           duration: 1000,
         })
 
-        // Get place_id if available
         const placeId = marker.getElement().dataset.placeId
         const placeName = marker.getElement().dataset.placeName
+        const placeTypesString = (
+          marker.getElement().querySelector("[data-types]") as HTMLElement
+        )?.dataset.types
+        const placeTypes = placeTypesString
+          ? JSON.parse(placeTypesString)
+          : undefined
 
-        // Notify parent component with precise coordinates
         onMarkerSelected?.({
           lat: parseFloat(lngLat.lat.toFixed(6)),
           lng: parseFloat(lngLat.lng.toFixed(6)),
           place_id: placeId,
           name: placeName,
+          types: placeTypes,
         })
       }
     }
@@ -582,7 +629,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     useEffect(() => {
       if (map.current) return // Initialize map only once
 
-      // Initialize map with Mapbox style
       map.current = new mapboxgl.Map({
         accessToken: MAPBOX_API_KEY,
         container: mapContainer.current!,
@@ -605,9 +651,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         })
       }
 
-      // Add shadow simulator after map loads
       map.current.on("load", async () => {
-        // Ensure map is fully loaded before initializing ShadeMap
         await mapLoaded(map.current!)
 
         map.current!.addLayer({
@@ -625,7 +669,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           },
         })
 
-        // Add zoom and rotation controls to the map in the bottom right corner
         map.current!.addControl(
           new mapboxgl.NavigationControl(),
           "bottom-right"
@@ -678,21 +721,15 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           }
         )
 
-        // Call updateLabelVisibility after initial markers (if any) are added via addMarkers
-        // which should happen after 'load' if placesData is available early.
-        // Also, listen for map movements.
         if (map.current) {
           map.current.on("moveend", updateLabelVisibility)
           map.current.on("zoomend", updateLabelVisibility)
         }
-        // Attempt to update label visibility after everything in 'load' is done
         setTimeout(updateLabelVisibility, 0)
       })
 
-      // Update labels once the map is truly idle for the first time
       map.current.once("idle", updateLabelVisibility)
 
-      // Cleanup
       return () => {
         if (shadeMap.current) {
           shadeMap.current.remove()
@@ -703,16 +740,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           map.current = null
         }
       }
-    }, [onLoadingProgress])
+    }, [onLoadingProgress, defaultLocation, initialDate]) // Added defaultLocation and initialDate to dependency array
 
-    // Update ShadeMap and markers when initialDate prop changes, without reinitializing the map
     useEffect(() => {
       if (shadeMap.current) {
         setDate(initialDate)
       }
     }, [initialDate])
 
-    // Helper function to check for overlap between two rectangles
     const checkOverlap = (rect1: DOMRect, rect2: DOMRect): boolean => {
       return !(
         rect1.right < rect2.left ||
@@ -722,13 +757,11 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       )
     }
 
-    // Function to update label visibility based on overlaps
     const updateLabelVisibility = () => {
       if (!map.current || !map.current.isStyleLoaded()) return
 
       const visibleLabelRects: DOMRect[] = []
 
-      // First pass: Ensure selected marker's label is visible and accounted for
       if (selectedMarker.current) {
         const selectedEl = selectedMarker.current.getElement()
         const selectedNameElement = selectedEl.querySelector(
@@ -736,18 +769,15 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         ) as HTMLElement | null
 
         if (selectedNameElement) {
-          selectedNameElement.style.visibility = "visible" // Ensure it's visible
+          selectedNameElement.style.visibility = "visible"
           const rect = selectedNameElement.getBoundingClientRect()
-          // Only add to visibleLabelRects if it has actual dimensions (not 0x0)
           if (rect.width > 0 && rect.height > 0) {
             visibleLabelRects.push(rect)
           }
         }
       }
 
-      // Second pass: Process all other markers
       markers.current.forEach((marker) => {
-        // Skip the selected marker as it's already handled and forced visible
         if (marker === selectedMarker.current) {
           return
         }
@@ -758,15 +788,13 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         ) as HTMLElement | null
 
         if (nameElement) {
-          // Temporarily make it visible to get correct dimensions if it was hidden
           const originalVisibility = nameElement.style.visibility
           nameElement.style.visibility = "visible"
           const rect = nameElement.getBoundingClientRect()
-          nameElement.style.visibility = originalVisibility // Revert immediately
+          nameElement.style.visibility = originalVisibility
 
-          // Skip if the rect has no dimensions (can happen if element or map not fully ready)
           if (rect.width === 0 || rect.height === 0) {
-            nameElement.style.visibility = "hidden" // Ensure it's hidden if no valid rect
+            nameElement.style.visibility = "hidden"
             return
           }
 

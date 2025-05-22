@@ -48,6 +48,7 @@ export interface PlaceSelectData {
     width: number
     html_attributions: string[]
   }[]
+  types?: string[]
 }
 
 interface PlacesAutocompleteProps {

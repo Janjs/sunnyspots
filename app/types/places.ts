@@ -2,6 +2,7 @@ export enum PlaceType {
   Restaurant = "restaurant",
   Bar = "bar",
   Park = "park",
+  Cafe = "cafe",
 }
 
 export interface Place {

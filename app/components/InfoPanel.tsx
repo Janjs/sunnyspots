@@ -217,12 +217,6 @@ export default function InfoPanel({
                   </>
                 )}
               </Carousel>
-              {displayData.photos.length > 0 && (
-                <div className="flex justify-end text-xs text-muted-foreground mt-1">
-                  {displayData.photos.length} photo
-                  {displayData.photos.length !== 1 ? "s" : ""}
-                </div>
-              )}
             </div>
           )}
           {/* Placeholder if no photos and not loading photos */}

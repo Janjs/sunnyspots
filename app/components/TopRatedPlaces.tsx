@@ -17,6 +17,8 @@ interface TopRatedPlacesProps {
     geometry: { location: { lat: number; lng: number } }
     outdoorSeating: boolean
     place_id: string
+    name?: string
+    types?: string[]
   }) => void
   onPlacesLoaded?: (places: PlaceResult[]) => void
   selectedPlaceId?: string
@@ -63,9 +65,15 @@ const PlaceCard = ({
 
   return (
     <Card
-      className={`overflow-hidden relative group cursor-pointer transition-all 
-        hover:ring-1 hover:shadow-md from-blue-500
-        ${isSelected ? "ring-2 ring-primary shadow-lg" : ""}`}
+      className={`overflow-hidden relative group cursor-pointer transition-all ${
+        isSelected
+          ? "ring-2 ring-primary shadow-lg"
+          : "hover:ring-1 hover:shadow-md"
+      } ${
+        !photoUrl
+          ? "bg-slate-800/60 backdrop-blur-lg border border-slate-700/50"
+          : ""
+      }`}
       onClick={onClick}
       data-place-id={place.place_id}
       data-place-lat={place.geometry.location.lat}
@@ -181,6 +189,8 @@ export default function TopRatedPlaces({
       geometry: place.geometry,
       outdoorSeating: true,
       place_id: place.place_id,
+      name: place.name,
+      types: place.types,
     })
   }
 
@@ -199,7 +209,7 @@ export default function TopRatedPlaces({
       {places.length === 0 ? (
         <p className="text-sm text-muted-foreground">No places found nearby</p>
       ) : (
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1">
           {places.map((place) => (
             <PlaceCard
               key={place.place_id}

@@ -164,6 +164,23 @@ export interface PlaceResult {
   types?: string[] // Added to store place types
 }
 
+export interface PlaceSelectData {
+  place_id: string
+  name: string
+  geometry: {
+    location: Location
+  }
+  formatted_address: string
+  outdoorSeating: boolean
+  photos?: {
+    photo_reference: string
+    height: number
+    width: number
+    html_attributions: string[]
+  }[]
+  types?: string[] // Added types
+}
+
 export async function fetchPlaceDetails(
   placeId: string
 ): Promise<PlaceSelectData | null> {
@@ -172,7 +189,7 @@ export async function fetchPlaceDetails(
     `[Places API] Fetching details for place (for PlaceSelectData): ${placeId}`
   )
 
-  const detailsUrl = `${placesApiUrl}/${placeId}?fields=name,id,location,formattedAddress,outdoorSeating,photos&languageCode=en-US`
+  const detailsUrl = `${placesApiUrl}/${placeId}?fields=name,id,location,formattedAddress,outdoorSeating,photos,types&languageCode=en-US`
 
   const response = await fetch(detailsUrl, {
     method: "GET",
@@ -232,6 +249,7 @@ export async function fetchPlaceDetails(
         ),
       }))
       .filter((p: any) => p.photo_reference), // Ensure photo_reference is valid
+    types: placeDetails.types || [], // Added types
   }
   return placeSelectData
 }
@@ -247,7 +265,7 @@ export async function searchTopOutdoorPlaces({
   radius = 1500,
 }: NearbySearchParams): Promise<PlaceResult[]> {
   try {
-    const restaurantAndBarTypes = `${PlaceType.Restaurant},${PlaceType.Bar}`
+    const restaurantAndBarTypes = `${PlaceType.Restaurant},${PlaceType.Bar},${PlaceType.Cafe}`
     const parkType = PlaceType.Park
 
     // Fetch restaurants and bars with "outdoor seating" keyword
