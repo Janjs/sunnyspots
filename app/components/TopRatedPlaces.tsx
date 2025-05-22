@@ -18,7 +18,7 @@ interface TopRatedPlacesProps {
     outdoorSeating: boolean
     place_id: string
     name?: string
-    types?: string[]
+    type: PlaceType
   }) => void
   onPlacesLoaded?: (places: PlaceResult[]) => void
   selectedPlaceId?: string
@@ -26,6 +26,7 @@ interface TopRatedPlacesProps {
 
 interface PlaceWithPhoto extends PlaceResult {
   photoUrl?: string
+  type: PlaceType
 }
 
 const PlaceCard = ({
@@ -52,13 +53,13 @@ const PlaceCard = ({
     place.geometry.location.lng
   )
 
-  const getPlaceIcon = (placeTypes: string[] | undefined) => {
-    if (!placeTypes || placeTypes.length === 0) return null
-    if (placeTypes.includes(PlaceType.Park))
+  const getPlaceIcon = (placeType: PlaceType | undefined) => {
+    if (!placeType) return null
+    if (placeType === PlaceType.Park)
       return <Trees className="h-4 w-4 text-green-300 ml-1" />
-    if (placeTypes.includes(PlaceType.Restaurant))
+    if (placeType === PlaceType.Restaurant)
       return <Utensils className="h-4 w-4 text-orange-300 ml-1" />
-    if (placeTypes.includes(PlaceType.Bar))
+    if (placeType === PlaceType.Bar)
       return <Martini className="h-4 w-4 text-purple-300 ml-1" />
     return null
   }
@@ -118,7 +119,7 @@ const PlaceCard = ({
                   </p>
                 </div>
                 <div className="min-w-4 min-h-4 flex items-center">
-                  {getPlaceIcon(place.types)}
+                  {getPlaceIcon(place.type)}
                   {hasSun ? (
                     <Sun className="h-4 w-4 text-yellow-100 ml-1" />
                   ) : (
@@ -190,7 +191,7 @@ export default function TopRatedPlaces({
       outdoorSeating: true,
       place_id: place.place_id,
       name: place.name,
-      types: place.types,
+      type: place.type,
     })
   }
 

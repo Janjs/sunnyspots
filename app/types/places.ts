@@ -15,5 +15,5 @@ export interface Place {
       text: string
     }
   }
-  types?: string[]
+  type: PlaceType
 }

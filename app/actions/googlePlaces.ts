@@ -45,6 +45,7 @@ async function fetchNearbyPlacesByType(
     })
     const endTime = Date.now()
     const responseTime = endTime - startTime
+
     console.log(
       `[Places API] Nearby search for type ${type} completed in ${responseTime}ms (${
         wasResponseCached(responseTime) ? "CACHE HIT" : "CACHE MISS"
@@ -58,7 +59,6 @@ async function fetchNearbyPlacesByType(
     }
 
     const data = await response.json()
-
     if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
       throw new Error(
         `Places API Error (type: ${type}): ${data.status} ${
@@ -80,7 +80,7 @@ async function fetchNearbyPlacesByType(
       photos: place.photos,
       user_ratings_total: place.user_ratings_total,
       business_status: place.business_status,
-      types: place.types,
+      type: mapToPlaceType(place.types),
     }))
   } catch (error) {
     console.error(`Error fetching nearby places (type: ${type}):`, error)
@@ -160,25 +160,17 @@ export interface PlaceResult {
   price_level?: number
   user_ratings_total?: number
   business_status?: string
-  outdoorSeating?: boolean // Added field
-  types?: string[] // Added to store place types
+  type: PlaceType // Only one type per place
 }
 
-export interface PlaceSelectData {
-  place_id: string
-  name: string
-  geometry: {
-    location: Location
-  }
-  formatted_address: string
-  outdoorSeating: boolean
-  photos?: {
-    photo_reference: string
-    height: number
-    width: number
-    html_attributions: string[]
-  }[]
-  types?: string[] // Added types
+function mapToPlaceType(types: string[] | undefined): PlaceType {
+  if (!types || types.length === 0) return PlaceType.Restaurant
+  const t = types[0].toLowerCase()
+  if (t.includes("park")) return PlaceType.Park
+  if (t.includes("restaurant")) return PlaceType.Restaurant
+  if (t.includes("bar") || t.includes("pub")) return PlaceType.Bar
+  if (t.includes("cafe") || t.includes("coffee")) return PlaceType.Cafe
+  return PlaceType.Restaurant
 }
 
 export async function fetchPlaceDetails(
@@ -227,6 +219,8 @@ export async function fetchPlaceDetails(
     return null
   }
 
+  console.log("placeDetails", placeDetails)
+
   // Map API response to PlaceSelectData
   const placeSelectData: PlaceSelectData = {
     place_id: placeDetails.id,
@@ -249,7 +243,7 @@ export async function fetchPlaceDetails(
         ),
       }))
       .filter((p: any) => p.photo_reference), // Ensure photo_reference is valid
-    types: placeDetails.types || [], // Added types
+    type: mapToPlaceType(placeDetails.types),
   }
   return placeSelectData
 }
@@ -265,7 +259,7 @@ export async function searchTopOutdoorPlaces({
   radius = 1500,
 }: NearbySearchParams): Promise<PlaceResult[]> {
   try {
-    const restaurantAndBarTypes = `${PlaceType.Restaurant},${PlaceType.Bar},${PlaceType.Cafe}`
+    const restaurantAndBarTypes = `${PlaceType.Restaurant}|${PlaceType.Bar}|${PlaceType.Cafe}`
     const parkType = PlaceType.Park
 
     // Fetch restaurants and bars with "outdoor seating" keyword

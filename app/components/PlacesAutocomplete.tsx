@@ -31,7 +31,7 @@ export interface Place {
       text: string
     }
   }
-  types?: string[]
+  type: PlaceType
 }
 
 export interface PlaceSelectData {
@@ -48,7 +48,7 @@ export interface PlaceSelectData {
     width: number
     html_attributions: string[]
   }[]
-  types?: string[]
+  type: PlaceType
 }
 
 interface PlacesAutocompleteProps {

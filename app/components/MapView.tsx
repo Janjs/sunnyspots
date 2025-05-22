@@ -31,7 +31,7 @@ interface MapViewProps {
       | (Location & {
           place_id?: string
           name?: string
-          types?: string[]
+          type?: string
         })
       | null
   ) => void
@@ -42,7 +42,7 @@ interface MapViewRef {
     coordinates: Location,
     outdoorSeating: boolean,
     name?: string,
-    types?: string[]
+    type?: string
   ) => void
   setDate: (date: Date) => void
   clearMarkers: () => void
@@ -52,7 +52,7 @@ interface MapViewRef {
       outdoorSeating: boolean
       place_id?: string
       name?: string
-      types?: string[]
+      type?: string
     }[]
   ) => void
   centerOnLocation: (coordinates: Location) => void
@@ -88,7 +88,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const currentDate = useRef<Date>(initialDate)
     const selectedMarker = useRef<mapboxgl.Marker | null>(null)
     const markerData = useRef<
-      Map<string, { name?: string; place_id?: string; types?: string[] }>
+      Map<string, { name?: string; place_id?: string; type?: string }>
     >(new Map())
 
     useEffect(() => {
@@ -105,8 +105,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const createMarkerElement = (
       coordinates: Location,
       name?: string,
-      types?: string[]
+      type?: string
     ) => {
+      console.log(
+        "[MapView] createMarkerElement - Input Name:",
+        name,
+        "Input Type:",
+        type
+      )
       const el = document.createElement("div")
       el.style.display = "flex"
       el.style.flexDirection = "column" // Stack name and icon vertically
@@ -159,42 +165,68 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         coordinates.lng
       )
 
-      let iconSVG = hasSun ? sunIconSVG : moonIconSVG
+      if (type) console.log("[MapView] Using place type:", type)
+
+      let iconSVG = ""
       let bgColor = hasSun ? "rgb(59, 130, 246)" : "rgb(55, 65, 81)" // blue-500 or gray-700
       let iconColor = hasSun ? "#fef9c3" : "#94a3b8" // yellow-100 or slate-400
 
-      const primaryType = types?.find(
-        (type) =>
-          type === PlaceType.Park ||
-          type === PlaceType.Restaurant ||
-          type === PlaceType.Bar ||
-          type === PlaceType.Cafe
-      )
+      if (type) {
+        el.dataset.placeType = type
+        const normalizedType = type.toLowerCase()
 
-      if (primaryType) {
-        el.dataset.placeType = primaryType // Store primary type for potential styling
-        switch (primaryType) {
-          case PlaceType.Park:
-            iconSVG = parkIconSVG
-            bgColor = "rgb(34, 197, 94)" // green-500
-            iconColor = "#dcfce7" // green-100
-            break
-          case PlaceType.Restaurant:
-            iconSVG = restaurantIconSVG
-            bgColor = "rgb(249, 115, 22)" // orange-500
-            iconColor = "#ffedd5" // orange-100
-            break
-          case PlaceType.Bar:
-            iconSVG = barIconSVG
-            bgColor = "rgb(168, 85, 247)" // purple-500
-            iconColor = "#f3e8ff" // purple-100
-            break
-          case PlaceType.Cafe:
-            iconSVG = cafeIconSVG
-            bgColor = "rgb(161, 98, 7)" // yellow-700 (like coffee)
-            iconColor = "#fefce8" // yellow-50
-            break
+        // Check against more inclusive patterns
+        if (
+          normalizedType === PlaceType.Park.toLowerCase() ||
+          normalizedType === "park" ||
+          normalizedType.includes("park")
+        ) {
+          iconSVG = parkIconSVG
+          bgColor = "rgb(34, 197, 94)" // green-500
+          iconColor = "#dcfce7" // green-100
+        } else if (
+          normalizedType === PlaceType.Restaurant.toLowerCase() ||
+          normalizedType === "restaurant" ||
+          normalizedType.includes("restaurant") ||
+          normalizedType.includes("food")
+        ) {
+          iconSVG = restaurantIconSVG
+          bgColor = "rgb(249, 115, 22)" // orange-500
+          iconColor = "#ffedd5" // orange-100
+        } else if (
+          normalizedType === PlaceType.Bar.toLowerCase() ||
+          normalizedType === "bar" ||
+          normalizedType.includes("bar") ||
+          normalizedType.includes("pub")
+        ) {
+          iconSVG = barIconSVG
+          bgColor = "rgb(168, 85, 247)" // purple-500
+          iconColor = "#f3e8ff" // purple-100
+        } else if (
+          normalizedType === PlaceType.Cafe.toLowerCase() ||
+          normalizedType === "cafe" ||
+          normalizedType.includes("cafe") ||
+          normalizedType.includes("coffee")
+        ) {
+          iconSVG = cafeIconSVG
+          bgColor = "rgb(161, 98, 7)" // yellow-700
+          iconColor = "#fefce8" // yellow-50
         }
+      } else if (
+        name?.toLowerCase().includes("restaurant") ||
+        name?.toLowerCase().includes("kitchen") ||
+        name?.toLowerCase().includes("eatery") ||
+        name?.toLowerCase().includes("dining")
+      ) {
+        el.dataset.placeType = PlaceType.Restaurant
+        iconSVG = restaurantIconSVG
+        bgColor = "rgb(249, 115, 22)" // orange-500
+        iconColor = "#ffedd5" // orange-100
+      }
+
+      if (!iconSVG) {
+        // Default icon if no type matched
+        iconSVG = hasSun ? sunIconSVG : moonIconSVG
       }
 
       iconContainer.className = cn(
@@ -236,7 +268,10 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       iconContainer.dataset.hasSun = hasSun.toString() // Still useful for generic sun/moon state if no type
       iconContainer.dataset.bgColor = originalBgColor
       iconContainer.dataset.iconColor = originalIconColor
-      if (types) iconContainer.dataset.types = JSON.stringify(types)
+      if (type) {
+        iconContainer.dataset.type = type
+        console.log("[MapView] Storing type in dataset:", type)
+      }
 
       el.appendChild(iconContainer)
       el.dataset.markerElement = "true"
@@ -257,15 +292,22 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         outdoorSeating: boolean
         place_id?: string
         name?: string
-        types?: string[]
+        type?: string
       }[]
     ) => {
       clearMarkers()
+      console.log("[MapView] Adding markers:", places)
       places.forEach((place) => {
+        console.log(
+          "[MapView] Processing place:",
+          place.name,
+          "with type:",
+          place.type
+        )
         const markerElement = createMarkerElement(
           place.geometry.location,
           place.name,
-          place.types
+          place.type
         )
 
         const coords = place.geometry.location
@@ -274,8 +316,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         const currentMarkerData: {
           name?: string
           place_id?: string
-          types?: string[]
-        } = { name: place.name, types: place.types }
+          type?: string
+        } = { name: place.name, type: place.type }
         if (place.place_id) {
           markerElement.dataset.placeId = place.place_id
           currentMarkerData.place_id = place.place_id
@@ -311,19 +353,16 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
               })
               const placeId = marker.getElement().dataset.placeId
               const placeName = marker.getElement().dataset.placeName
-              const placeTypesString = (
-                marker.getElement().querySelector("[data-types]") as HTMLElement
-              )?.dataset.types
-              const placeTypes = placeTypesString
-                ? JSON.parse(placeTypesString)
-                : undefined
+              const placeType = (
+                marker.getElement().querySelector("[data-type]") as HTMLElement
+              )?.dataset.type
 
               onMarkerSelected?.({
                 lat: parseFloat(lngLat.lat.toFixed(6)),
                 lng: parseFloat(lngLat.lng.toFixed(6)),
                 place_id: placeId,
                 name: placeName,
-                types: placeTypes,
+                type: placeType,
               })
             }
           })
@@ -387,16 +426,16 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       coordinates: Location,
       outdoorSeating: boolean,
       name?: string,
-      types?: string[]
+      type?: string
     ) => {
       clearMarkers()
-      const markerElement = createMarkerElement(coordinates, name, types)
+      const markerElement = createMarkerElement(coordinates, name, type)
       const coordKey = `${coordinates.lat.toFixed(6)},${coordinates.lng.toFixed(
         6
       )}`
-      markerData.current.set(coordKey, { name, types })
+      markerData.current.set(coordKey, { name, type })
       if (name) markerElement.dataset.placeName = name
-      // place_id is not available in this specific addMarker function, only name and types
+      // place_id is not available in this specific addMarker function, only name and type
 
       const marker = new mapboxgl.Marker({
         element: markerElement,
@@ -426,18 +465,15 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
               duration: 1000,
             })
             const placeName = marker.getElement().dataset.placeName
-            const placeTypesString = (
-              marker.getElement().querySelector("[data-types]") as HTMLElement
-            )?.dataset.types
-            const placeTypes = placeTypesString
-              ? JSON.parse(placeTypesString)
-              : undefined
+            const placeType = (
+              marker.getElement().querySelector("[data-type]") as HTMLElement
+            )?.dataset.type
 
             onMarkerSelected?.({
               lat: parseFloat(lngLat.lat.toFixed(6)),
               lng: parseFloat(lngLat.lng.toFixed(6)),
               name: placeName,
-              types: placeTypes,
+              type: placeType,
               // place_id is not available here
             })
           }
@@ -465,7 +501,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           coords: { lat: number; lng: number }
           name?: string
           place_id?: string
-          types?: string[]
+          type?: string
           isSelected: boolean
         }[] = []
 
@@ -477,7 +513,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
             coords: { lat: lngLat.lat, lng: lngLat.lng },
             name: data?.name,
             place_id: data?.place_id,
-            types: data?.types,
+            type: data?.type,
             isSelected: selectedMarker.current === marker,
           })
           marker.remove()
@@ -490,11 +526,11 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           const newElement = createMarkerElement(
             data.coords,
             data.name,
-            data.types
+            data.type
           )
           if (data.place_id) newElement.dataset.placeId = data.place_id
           if (data.name) newElement.dataset.placeName = data.name
-          // types are intrinsically handled by createMarkerElement and stored if needed by data-types attribute
+          // type is intrinsically handled by createMarkerElement and stored if needed by data-type attribute
           const coordKey = `${data.coords.lat.toFixed(
             6
           )},${data.coords.lng.toFixed(6)}`
@@ -526,19 +562,16 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
                 const lngLat = newMarker.getLngLat()
                 const placeId = newElement.dataset.placeId
                 const placeName = newElement.dataset.placeName
-                const placeTypesString = (
-                  newElement.querySelector("[data-types]") as HTMLElement
-                )?.dataset.types
-                const placeTypes = placeTypesString
-                  ? JSON.parse(placeTypesString)
-                  : undefined
+                const placeType = (
+                  newElement.querySelector("[data-type]") as HTMLElement
+                )?.dataset.type
 
                 onMarkerSelected?.({
                   lat: parseFloat(lngLat.lat.toFixed(6)),
                   lng: parseFloat(lngLat.lng.toFixed(6)),
                   place_id: placeId,
                   name: placeName,
-                  types: placeTypes,
+                  type: placeType,
                 })
               }
             })
@@ -600,19 +633,16 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
         const placeId = marker.getElement().dataset.placeId
         const placeName = marker.getElement().dataset.placeName
-        const placeTypesString = (
-          marker.getElement().querySelector("[data-types]") as HTMLElement
-        )?.dataset.types
-        const placeTypes = placeTypesString
-          ? JSON.parse(placeTypesString)
-          : undefined
+        const placeType = (
+          marker.getElement().querySelector("[data-type]") as HTMLElement
+        )?.dataset.type
 
         onMarkerSelected?.({
           lat: parseFloat(lngLat.lat.toFixed(6)),
           lng: parseFloat(lngLat.lng.toFixed(6)),
           place_id: placeId,
           name: placeName,
-          types: placeTypes,
+          type: placeType,
         })
       }
     }
