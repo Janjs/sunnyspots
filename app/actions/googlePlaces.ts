@@ -15,6 +15,80 @@ const ONE_HOUR_IN_SECONDS = 3600
 // Helper to determine if response was likely cached based on timing
 const wasResponseCached = (responseTime: number) => responseTime < 20 // If response took less than 20ms, it was likely cached
 
+async function fetchNearbyPlacesByType(
+  location: { lat: number; lng: number },
+  type: string,
+  keyword?: string, // Keyword is now optional
+  radius: number = 1500
+): Promise<PlaceResult[]> {
+  const startTime = Date.now()
+  const paramsObj: Record<string, string> = {
+    location: `${location.lat},${location.lng}`,
+    radius: radius.toString(),
+    type,
+    rankby: "prominence",
+    key: GOOGLE_API_KEY as string,
+  }
+  if (keyword) {
+    paramsObj.keyword = keyword
+  }
+  const params = new URLSearchParams(paramsObj)
+
+  console.log(
+    `[Places API] Searching nearby places at location: ${location.lat},${
+      location.lng
+    } with type: ${type}${keyword ? `, keyword: ${keyword}` : ""}`
+  )
+  try {
+    const response = await fetch(`${mapsApiUrl}?${params}`, {
+      next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+    })
+    const endTime = Date.now()
+    const responseTime = endTime - startTime
+    console.log(
+      `[Places API] Nearby search for type ${type} completed in ${responseTime}ms (${
+        wasResponseCached(responseTime) ? "CACHE HIT" : "CACHE MISS"
+      })`
+    )
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch nearby places (type: ${type}): ${response.statusText}`
+      )
+    }
+
+    const data = await response.json()
+
+    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+      throw new Error(
+        `Places API Error (type: ${type}): ${data.status} ${
+          data.error_message || ""
+        }`
+      )
+    }
+    return (data.results || []).map((place: any) => ({
+      place_id: place.place_id,
+      name: place.name,
+      rating: place.rating,
+      vicinity: place.vicinity,
+      geometry: {
+        location: {
+          lat: place.geometry.location.lat,
+          lng: place.geometry.location.lng,
+        },
+      },
+      photos: place.photos,
+      user_ratings_total: place.user_ratings_total,
+      business_status: place.business_status,
+      types: place.types,
+    }))
+  } catch (error) {
+    console.error(`Error fetching nearby places (type: ${type}):`, error)
+    // Don't rethrow, allow other searches to proceed if one fails
+    return []
+  }
+}
+
 export async function fetchPlaceSuggestions(
   query: string,
   location: { lat: number; lng: number },
@@ -164,73 +238,72 @@ export async function fetchPlaceDetails(
 
 interface NearbySearchParams {
   location: { lat: number; lng: number }
-  type?: string
-  keyword?: string
+  // type and keyword are no longer direct params here, managed internally
   radius?: number
 }
 
 export async function searchTopOutdoorPlaces({
   location,
-  type = `${PlaceType.Restaurant},${PlaceType.Bar},${PlaceType.Park}`,
-  keyword = "outdoor seating", // This keyword might not be ideal for parks. We may need to adjust this.
   radius = 1500,
 }: NearbySearchParams): Promise<PlaceResult[]> {
-  const startTime = Date.now()
-  const params = new URLSearchParams({
-    location: `${location.lat},${location.lng}`,
-    radius: radius.toString(),
-    type,
-    keyword,
-    rankby: "prominence",
-    key: GOOGLE_API_KEY as string,
-  })
-  console.log(
-    `[Places API] Searching nearby places at location: ${location.lat},${location.lng} with type: ${type}, keyword: ${keyword}`
-  )
   try {
-    const response = await fetch(`${mapsApiUrl}?${params}`, {
-      next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
-    })
-    const endTime = Date.now()
-    const responseTime = endTime - startTime
-    console.log(
-      `[Places API] Nearby search completed in ${responseTime}ms (${
-        wasResponseCached(responseTime) ? "CACHE HIT" : "CACHE MISS"
-      })`
+    const restaurantAndBarTypes = `${PlaceType.Restaurant},${PlaceType.Bar}`
+    const parkType = PlaceType.Park
+
+    // Fetch restaurants and bars with "outdoor seating" keyword
+    const restaurantAndBarPromise = fetchNearbyPlacesByType(
+      location,
+      restaurantAndBarTypes,
+      "outdoor seating", // Specific keyword for these types
+      radius
     )
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch nearby places: ${response.statusText}`)
+    // Fetch parks (no specific keyword, type is sufficient)
+    // We can request more results for parks if desired by adjusting API parameters if available,
+    // but Nearby Search usually returns up to 20 results, or 60 with pagination.
+    // For simplicity, we'll rely on the default for now.
+    const parkPromise = fetchNearbyPlacesByType(
+      location,
+      parkType,
+      undefined,
+      radius
+    ) // No keyword for parks
+
+    const [restaurantAndBarResults, parkResults] = await Promise.all([
+      restaurantAndBarPromise,
+      parkPromise,
+    ])
+
+    // Combine results, ensuring no duplicates if a place somehow fits both queries
+    const combinedResults: PlaceResult[] = []
+    const placeIds = new Set<string>()
+
+    const addPlaces = (places: PlaceResult[]) => {
+      for (const place of places) {
+        if (!placeIds.has(place.place_id)) {
+          combinedResults.push(place)
+          placeIds.add(place.place_id)
+        }
+      }
     }
 
-    const data = await response.json()
+    // Add parks first, then restaurants/bars
+    addPlaces(parkResults)
+    addPlaces(restaurantAndBarResults)
 
-    if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-      throw new Error(
-        `Places API Error: ${data.status} ${data.error_message || ""}`
-      )
-    }
+    // The requirement for "atleast 5 parks" is tricky with API limits.
+    // This current implementation adds all found parks first.
+    // If you need to strictly enforce 5 parks or a different sorting/prioritization,
+    // that logic would go here, potentially involving more complex fetching or filtering.
 
-    // Add the main type of the place to the result for icon display
-    return (data.results || []).map((place: any) => ({
-      place_id: place.place_id,
-      name: place.name,
-      rating: place.rating,
-      vicinity: place.vicinity,
-      geometry: {
-        location: {
-          lat: place.geometry.location.lat,
-          lng: place.geometry.location.lng,
-        },
-      },
-      photos: place.photos,
-      user_ratings_total: place.user_ratings_total,
-      business_status: place.business_status,
-      types: place.types, // Store the types from the API response
-    }))
+    console.log(
+      `[Places API] Combined search: ${parkResults.length} parks, ${restaurantAndBarResults.length} restaurants/bars. Total unique: ${combinedResults.length}`
+    )
+
+    return combinedResults
   } catch (error) {
-    console.error("Error fetching nearby places:", error)
-    throw error
+    console.error("Error in searchTopOutdoorPlaces combining results:", error)
+    throw error // Re-throw if the overall process fails critically
   }
 }
 
