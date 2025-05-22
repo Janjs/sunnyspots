@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
+import { PlaceType } from "./types/places"
 
 // Extend PlaceResult for our needs
 interface ExtendedPlaceResult extends PlaceResult {
@@ -51,6 +52,7 @@ interface MapViewRef {
       outdoorSeating: boolean
       place_id?: string
       name?: string
+      type: PlaceType
     }[]
   ) => void
   centerOnLocation: (coordinates: { lat: number; lng: number }) => void
@@ -214,6 +216,7 @@ export default function MapUI() {
       outdoorSeating: true,
       place_id: place.place_id,
       name: place.name,
+      type: place.type,
     }))
     mapViewRef.current?.addMarkers(placesWithOutdoorSeatingAndName)
   }
