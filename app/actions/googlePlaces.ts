@@ -2,18 +2,15 @@
 
 import { Place, PlaceSelectData } from "../components/PlacesAutocomplete"
 import { PlaceType } from "@/app/types/places"
+import { fetchWithCache } from "@/app/utils/fetchWithCache"
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY
 const placesApiUrl = "https://places.googleapis.com/v1/places"
 const mapsApiUrl =
   "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
-// Cache durations in seconds
-const ONE_DAY_IN_SECONDS = 86400
-const ONE_HOUR_IN_SECONDS = 3600
-
 // Helper to determine if response was likely cached based on timing
-const wasResponseCached = (responseTime: number) => responseTime < 20 // If response took less than 20ms, it was likely cached
+const wasResponseCached = (responseTime: number) => responseTime < 10 // If response took less than 20ms, it was likely cached
 
 async function fetchNearbyPlacesByType(
   location: { lat: number; lng: number },
@@ -40,8 +37,8 @@ async function fetchNearbyPlacesByType(
     } with type: ${type}${keyword ? `, keyword: ${keyword}` : ""}`
   )
   try {
-    const response = await fetch(`${mapsApiUrl}?${params}`, {
-      next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+    const response = await fetchWithCache(`${mapsApiUrl}?${params}`, {
+      // next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
     })
     const endTime = Date.now()
     const responseTime = endTime - startTime
@@ -114,14 +111,14 @@ export async function fetchPlaceSuggestions(
       location.lat
     },${location.lng} with types: ${types.join(",")}`
   )
-  const response = await fetch(`${placesApiUrl}:autocomplete`, {
+  const response = await fetchWithCache(`${placesApiUrl}:autocomplete`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": GOOGLE_API_KEY as string,
     },
     body: JSON.stringify(body),
-    next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+    // next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
   })
   const endTime = Date.now()
   const responseTime = endTime - startTime
@@ -183,13 +180,13 @@ export async function fetchPlaceDetails(
 
   const detailsUrl = `${placesApiUrl}/${placeId}?fields=name,id,location,formattedAddress,outdoorSeating,photos,types&languageCode=en-US`
 
-  const response = await fetch(detailsUrl, {
+  const response = await fetchWithCache(detailsUrl, {
     method: "GET",
     headers: {
       "X-Goog-Api-Key": GOOGLE_API_KEY as string,
       "Content-Type": "application/json",
     },
-    next: { revalidate: ONE_DAY_IN_SECONDS },
+    // next: { revalidate: ONE_DAY_IN_SECONDS }, // DELETED
   })
 
   const endTime = Date.now()
@@ -218,8 +215,6 @@ export async function fetchPlaceDetails(
     )
     return null
   }
-
-  console.log("placeDetails", placeDetails)
 
   // Map API response to PlaceSelectData
   const placeSelectData: PlaceSelectData = {
@@ -269,7 +264,6 @@ export async function searchTopOutdoorPlaces({
       "outdoor seating", // Specific keyword for these types
       radius
     )
-
     // Fetch parks (no specific keyword, type is sufficient)
     // We can request more results for parks if desired by adjusting API parameters if available,
     // but Nearby Search usually returns up to 20 results, or 60 with pagination.
@@ -371,14 +365,14 @@ export async function fetchCitySuggestions(
       location ? ` biased around: ${location.lat},${location.lng}` : ""
     }`
   )
-  const response = await fetch(url, {
+  const response = await fetchWithCache(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": GOOGLE_API_KEY as string,
     },
     body: bodyString,
-    next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
+    // next: { revalidate: ONE_DAY_IN_SECONDS }, // Cache for 1 day
   })
 
   const endTime = Date.now()

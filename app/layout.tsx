@@ -2,8 +2,9 @@ import "./globals.css"
 import Script from "next/script"
 
 export const metadata = {
-  title: "Terras Map",
-  description: "A map to know when restaurants and bars get sunlight.",
+  title: "Sunny Spots",
+  description:
+    "A map to know when cafes, parks, restaurants and bars get sunlight.",
   generator: "v0.dev",
 }
 
