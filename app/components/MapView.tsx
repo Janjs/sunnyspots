@@ -42,7 +42,7 @@ interface MapViewRef {
     coordinates: Location,
     outdoorSeating: boolean,
     name?: string,
-    type?: string
+    type?: PlaceType
   ) => void
   setDate: (date: Date) => void
   clearMarkers: () => void
@@ -52,7 +52,7 @@ interface MapViewRef {
       outdoorSeating: boolean
       place_id?: string
       name?: string
-      type?: string
+      type: PlaceType
     }[]
   ) => void
   centerOnLocation: (coordinates: Location) => void
@@ -105,7 +105,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     const createMarkerElement = (
       coordinates: Location,
       name?: string,
-      type?: string
+      type?: PlaceType
     ) => {
       const el = document.createElement("div")
       el.style.display = "flex"
@@ -283,7 +283,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         outdoorSeating: boolean
         place_id?: string
         name?: string
-        type?: string
+        type: PlaceType
       }[]
     ) => {
       clearMarkers()
@@ -410,7 +410,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       coordinates: Location,
       outdoorSeating: boolean,
       name?: string,
-      type?: string
+      type?: PlaceType
     ) => {
       clearMarkers()
       const markerElement = createMarkerElement(coordinates, name, type)
@@ -510,7 +510,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           const newElement = createMarkerElement(
             data.coords,
             data.name,
-            data.type
+            data.type as PlaceType | undefined
           )
           if (data.place_id) newElement.dataset.placeId = data.place_id
           if (data.name) newElement.dataset.placeName = data.name

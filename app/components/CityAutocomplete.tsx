@@ -25,6 +25,7 @@ interface CityAutocompleteProps {
   ) => void
   initialValue?: string
   placeholder?: string
+  currentLocationForBias?: { lat: number; lng: number }
 }
 
 export default function CityAutocomplete({

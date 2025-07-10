@@ -13,6 +13,7 @@ import {
   fetchPlaceSuggestions,
   fetchPlaceDetails,
 } from "@/actions/googlePlaces"
+import { PlaceType } from "@/app/types/places"
 
 const DEBOUNCE_DELAY = 300
 
