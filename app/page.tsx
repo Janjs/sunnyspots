@@ -79,7 +79,7 @@ export default function MapUI() {
   >(new Map())
   const [placesData, setPlacesData] = useState<PlaceResult[]>([])
   const mapViewRef = useRef<MapViewRef | null>(null)
-  const [isEditCityModalOpen, setIsEditCityModalOpen] = useState(false)
+  const [isEditCityOpen, setEditCityOpen] = useState(false)
   const [layoutReady, setLayoutReady] = useState(false)
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -99,6 +99,17 @@ export default function MapUI() {
       setInfoPanelVisible(true)
     }
   }, [selectedPlace])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setEditCityOpen(true)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
 
   const handlePlaceSelect = (
     place: PlaceSelectData & { address_components?: any[] }
@@ -237,9 +248,6 @@ export default function MapUI() {
     times.sunrise.getHours() + times.sunrise.getMinutes() / 60
   const sunsetDecimal = times.sunset.getHours() + times.sunset.getMinutes() / 60
 
-  const openEditCityModal = () => setIsEditCityModalOpen(true)
-  const closeEditCityModal = () => setIsEditCityModalOpen(false)
-
   const handleSaveCity = async (newCityData: {
     name: string
     placeId?: string
@@ -290,7 +298,7 @@ export default function MapUI() {
         mapViewRef.current?.centerOnLocation(DEFAULT_LOCATION)
       }
     }
-    closeEditCityModal()
+    setEditCityOpen(false)
   }
 
   // Don't render anything layout-dependent until we know the device type
@@ -343,7 +351,10 @@ export default function MapUI() {
         >
           <div className="flex justify-between items-center">
             <div className={isMobile ? "ml-12" : ""}>
-              <CityTitle city={currentCity} onEditRequest={openEditCityModal} />
+              <CityTitle
+                city={currentCity}
+                onEditRequest={() => setEditCityOpen(true)}
+              />
             </div>
             <div className={isMobile ? "" : "ml-4"}>
               <WeatherDisplay
@@ -490,9 +501,9 @@ export default function MapUI() {
       </div>
 
       <EditCityModal
-        isOpen={isEditCityModalOpen}
+        isOpen={isEditCityOpen}
         currentCity={currentCity}
-        onClose={closeEditCityModal}
+        onClose={() => setEditCityOpen(false)}
         onSave={handleSaveCity}
         placeholder="Enter city name e.g. Amsterdam"
         currentLocationForBias={currentLocation}

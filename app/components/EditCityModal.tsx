@@ -1,17 +1,20 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { Search, MapPin } from "lucide-react"
+import { CornerDownLeft } from "lucide-react"
+import { Command as CommandPrimitive } from "cmdk"
+import { cn } from "@/lib/utils"
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import CityAutocomplete from "./CityAutocomplete"
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import { fetchCitySuggestions, CitySuggestion } from "@/actions/googlePlaces"
+
+const DEBOUNCE_DELAY = 300
 
 interface SelectedCityData {
   name: string
@@ -33,85 +36,180 @@ export default function EditCityModal({
   currentCity,
   onClose,
   onSave,
-  placeholder = "Enter or search city name",
+  placeholder = "Search for a city...",
   currentLocationForBias,
 }: EditCityModalProps) {
-  const [selectedCity, setSelectedCity] = useState<SelectedCityData | null>(
-    null
-  )
   const [inputValue, setInputValue] = useState(currentCity)
-  const [isCitySelectedFromList, setIsCitySelectedFromList] = useState(false)
+  const [suggestions, setSuggestions] = useState<CitySuggestion[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (isOpen) {
       setInputValue(currentCity)
-      setSelectedCity(null)
-      setIsCitySelectedFromList(false)
+      setSuggestions([])
+      setIsLoading(false)
+      // Focus the input when modal opens
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 100)
     } else {
       setInputValue("")
-      setSelectedCity(null)
-      setIsCitySelectedFromList(false)
+      setSuggestions([])
+      setIsLoading(false)
     }
   }, [currentCity, isOpen])
 
-  const handleCitySelectFromAutocomplete = (
-    citySelection: SelectedCityData | null
-  ) => {
-    if (citySelection) {
-      setSelectedCity(citySelection)
-      setInputValue(citySelection.name)
-      setIsCitySelectedFromList(true)
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
+  }, [])
 
-      onSave({
-        name: citySelection.name.trim(),
-        placeId: citySelection.placeId,
-      })
-    } else {
-      setSelectedCity(null)
-      setIsCitySelectedFromList(false)
+  const handleInputChange = async (value: string) => {
+    setInputValue(value)
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    if (!value.trim()) {
+      setSuggestions([])
+      setIsLoading(false)
+      return
+    }
+
+    setIsLoading(true)
+
+    debounceTimeoutRef.current = setTimeout(async () => {
+      try {
+        const citySuggestions = await fetchCitySuggestions(value)
+        setSuggestions(citySuggestions)
+      } catch (error) {
+        console.error("Error fetching city suggestions:", error)
+        setSuggestions([])
+      } finally {
+        setIsLoading(false)
+      }
+    }, DEBOUNCE_DELAY)
+  }
+
+  const handleSelectSuggestion = (suggestion: CitySuggestion) => {
+    const cityName = suggestion.placePrediction.structuredFormat.mainText.text
+    const fullText = suggestion.placePrediction.text.text
+    const placeId = suggestion.placePrediction.placeId
+
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+    setIsLoading(false)
+
+    setInputValue(cityName)
+    setSuggestions([])
+
+    // Automatically save and close like macOS Spotlight
+    onSave({ name: cityName.trim(), placeId })
+    onClose()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      onClose()
     }
   }
 
-  const handleSave = () => {
-    if (isCitySelectedFromList && selectedCity && selectedCity.name.trim()) {
-      onSave({ name: selectedCity.name.trim(), placeId: selectedCity.placeId })
-    } else if (inputValue.trim()) {
-      onSave({ name: inputValue.trim() })
-    } else if (currentCity) {
-      onSave({ name: currentCity })
-    }
-  }
+  const showCommandList =
+    inputValue.trim().length > 0 && suggestions.length > 0 && !isLoading
+
+  if (!isOpen) return null
 
   return (
-    <Dialog open={isOpen} onOpenChange={(openState) => !openState && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Edit City Name</DialogTitle>
-          <DialogDescription>Search for a new city or town.</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <CityAutocomplete
-            initialValue={inputValue}
-            onCitySelect={handleCitySelectFromAutocomplete}
-            placeholder={placeholder}
-            currentLocationForBias={currentLocationForBias}
-          />
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-          </DialogClose>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={!inputValue.trim() && !currentCity}
-          >
-            Save Changes
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Search Bar */}
+      <div className="relative w-full max-w-2xl mx-4">
+        <Command className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/60" />
+            <CommandPrimitive.Input
+              ref={inputRef}
+              value={inputValue}
+              onValueChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              className={cn(
+                "flex h-14 w-full bg-transparent px-12 py-4 text-lg text-white placeholder:text-white/60",
+                "outline-none appearance-none transition-all duration-200",
+                "focus:ring-0 focus:outline-none",
+                "disabled:cursor-not-allowed disabled:opacity-50"
+              )}
+            />
+            {/* Enter icon button on the right side of the input */}
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-label="Press Enter to select"
+              className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center rounded-lg border border-transparent bg-transparent transition-all duration-150 hover:border-white/30 hover:bg-white/10 hover:backdrop-blur focus:border-white/30 focus:bg-white/10 focus:backdrop-blur"
+              disabled
+            >
+              <CornerDownLeft className="h-5 w-5 text-white/60" />
+            </button>
+            {isLoading && (
+              <div className="absolute right-12 top-1/2 -translate-y-1/2">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              </div>
+            )}
+          </div>
+
+          {/* Suggestions Dropdown */}
+          {showCommandList && (
+            <div className="border-t border-white/10 bg-white/5 backdrop-blur-xl">
+              <CommandList className="max-h-80 overflow-auto">
+                <CommandEmpty className="py-8 text-center text-white/60">
+                  No cities found.
+                </CommandEmpty>
+                <CommandGroup>
+                  {suggestions.map((suggestion) => (
+                    <CommandItem
+                      key={suggestion.placePrediction.placeId}
+                      value={suggestion.placePrediction.text.text}
+                      onSelect={() => handleSelectSuggestion(suggestion)}
+                      className="flex items-center gap-3 px-6 py-4 text-white cursor-pointer"
+                    >
+                      <MapPin className="h-4 w-4 text-white/60 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">
+                          {
+                            suggestion.placePrediction.structuredFormat.mainText
+                              .text
+                          }
+                        </div>
+                        {suggestion.placePrediction.structuredFormat
+                          .secondaryText && (
+                          <div className="text-sm text-white/60 truncate">
+                            {
+                              suggestion.placePrediction.structuredFormat
+                                .secondaryText.text
+                            }
+                          </div>
+                        )}
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </div>
+          )}
+        </Command>
+      </div>
+    </div>
   )
 }

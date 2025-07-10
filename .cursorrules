@@ -84,5 +84,12 @@
       "**/dist": true,
       "**/build": true
     }
-  }
+  },
+  "user_rules": [
+    "Always use functional react and NextJS 15",
+    "use ui components and the projects custom typography, do not add custom styling otherwise",
+    "do not add comments unless strictly necessary to understand the code",
+    "When selecting Tailwind colors, always reference app/globals.css first to use the project's defined color scheme variables (background, foreground, primary, secondary, muted, accent, destructive, border, input, ring, chart-1 through chart-5, sidebar colors, etc.) instead of arbitrary Tailwind color classes",
+    "when I ask you to do a add all + commit, use 'git ac' instead of 'git add . && git commit -m'"
+  ]
 }
