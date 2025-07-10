@@ -4,7 +4,7 @@ import { Place, PlaceSelectData } from "../components/PlacesAutocomplete"
 import { PlaceType } from "@/app/types/places"
 import { fetchWithCache } from "@/app/utils/fetchWithCache"
 
-const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY
 const placesApiUrl = "https://places.googleapis.com/v1/places"
 const mapsApiUrl =
   "https://maps.googleapis.com/maps/api/place/nearbysearch/json"

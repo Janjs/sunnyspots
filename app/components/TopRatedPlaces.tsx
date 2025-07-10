@@ -50,10 +50,12 @@ const PlaceCard = ({
 }) => {
   const photoReference = place.photos?.[0]?.photo_reference
   const photoUrl = photoReference
-    ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&maxheight=400&photo_reference=${encodeURIComponent(
+    ? `/api/place/photo?photoReference=${encodeURIComponent(
         photoReference
-      )}&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
-    : undefined
+      )}&maxwidth=400&maxheight=400`
+    : null
+
+  console.log("photoUrl", photoUrl)
 
   const hasSun = hasSunlight(
     dateTime,

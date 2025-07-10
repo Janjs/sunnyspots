@@ -1,5 +1,3 @@
-"use server"
-
 const ONE_DAY_IN_SECONDS = 86400
 
 interface FetchOptions extends RequestInit {
