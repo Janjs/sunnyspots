@@ -23,7 +23,7 @@ interface Location {
 
 interface MapViewProps {
   onLoadingProgress: Dispatch<SetStateAction<number>>
-  defaultLocation: Location
+  location: Location
   initialDate: Date
   isMobile?: boolean
   onMarkerSelected?: (
@@ -75,7 +75,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
   (
     {
       onLoadingProgress,
-      defaultLocation,
+      location,
       initialDate,
       isMobile = false,
       onMarkerSelected,
@@ -633,12 +633,12 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
     useEffect(() => {
       if (map.current) return // Initialize map only once
-      console.log("defaultLocation", defaultLocation)
+      console.log("location", location)
       map.current = new mapboxgl.Map({
         accessToken: MAPBOX_API_KEY,
         container: mapContainer.current!,
         style: "mapbox://styles/mapbox/streets-v11",
-        center: { lat: defaultLocation.lat, lng: defaultLocation.lng },
+        center: { lat: location.lat, lng: location.lng },
         zoom: 15,
         hash: true,
         pitch: 45,
@@ -761,13 +761,13 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
     useEffect(() => {
       if (map.current) {
         map.current.flyTo({
-          center: [defaultLocation.lng, defaultLocation.lat],
+          center: [location.lng, location.lat],
           zoom: 15, // Or current zoom level if you want to preserve it
           essential: true,
           duration: 1500,
         })
       }
-    }, [defaultLocation]) // Re-run effect when defaultLocation changes
+    }, [location]) // Re-run effect when location changes
 
     const checkOverlap = (rect1: DOMRect, rect2: DOMRect): boolean => {
       return !(
