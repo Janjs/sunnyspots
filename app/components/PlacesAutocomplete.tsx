@@ -135,7 +135,7 @@ export default function PlacesAutocomplete({
 
   return (
     <div>
-      <Command className="relative bg-background border border-input rounded-md overflow-visible">
+      <Command className="relative bg-white/25 backdrop-blur-md border border-white/20 rounded-md overflow-visible shadow-lg">
         <div className="flex items-center px-3" cmdk-input-wrapper="">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <CommandPrimitive.Input
@@ -159,7 +159,7 @@ export default function PlacesAutocomplete({
         )}
 
         {value.trim().length > 0 && places.length > 0 && (
-          <CommandList className="bg-popover">
+          <CommandList className="bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
             <CommandEmpty className="text-muted-foreground">
               No places found.
             </CommandEmpty>
@@ -171,7 +171,7 @@ export default function PlacesAutocomplete({
                   onSelect={() => {
                     handleSelect(place)
                   }}
-                  className="text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+                  className="text-popover-foreground hover:bg-white/10 hover:backdrop-blur-lg"
                 >
                   <Check
                     className={cn(

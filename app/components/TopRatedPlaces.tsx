@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Star, Sun, Moon, Utensils, Martini, Trees } from "lucide-react"
+import { Star, Sun, Moon, Utensils, Martini, Trees, Info } from "lucide-react"
 import { searchTopOutdoorPlaces } from "@/app/actions/googlePlaces"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
 import Image from "next/image"
 import { hasSunlight } from "@/utils/sunlight"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
 import { PlaceType } from "@/app/types/places"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface TopRatedPlacesProps {
   location: { lat: number; lng: number }
@@ -226,7 +227,6 @@ export default function TopRatedPlaces({
 
   return (
     <div>
-      {/* PlaceType Tabs */}
       <div
         className="flex gap-2 mb-4 overflow-x-auto tab-scrollbar-hide -mx-2 px-2"
         style={{ WebkitOverflowScrolling: "touch" }}
@@ -238,8 +238,8 @@ export default function TopRatedPlaces({
             className={`px-4 py-1 rounded-full text-sm font-medium transition-colors whitespace-nowrap
               ${
                 selectedPlaceType === tab.value
-                  ? "bg-white/60 border-0"
-                  : "bg-transparent  hover:bg-white/50 border-0"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted/70"
               }
               `}
             onClick={() => setSelectedPlaceType(tab.value)}
@@ -249,10 +249,13 @@ export default function TopRatedPlaces({
           </button>
         ))}
       </div>
-      {filteredPlaces.length === 0 ? (
-        <p className="text-sm m-4 text-muted-foreground">
-          No places found nearby
-        </p>
+      {places.length === 0 ? (
+        <Alert>
+          <div className="flex items-center gap-2 ">
+            <Info className="h-4 w-4" />
+            <AlertDescription>No places found nearby</AlertDescription>
+          </div>
+        </Alert>
       ) : (
         <div className="grid gap-4 grid-cols-1">
           {filteredPlaces.map((place) => (

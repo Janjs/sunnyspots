@@ -84,6 +84,7 @@ export default function MapUI() {
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [infoPanelVisible, setInfoPanelVisible] = useState(true)
+  const [currentZoom, setCurrentZoom] = useState(15)
 
   // Only set layout state once we've detected device type
   useEffect(() => {
@@ -315,12 +316,19 @@ export default function MapUI() {
               initialDate={currentDate}
               onMarkerSelected={handleMarkerSelected}
               isMobile={isMobile}
+              onZoomLevelChange={setCurrentZoom}
             />
           </div>
 
           {loadingPercentage > 0 && loadingPercentage < 100 && (
-            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
+            <div className="absolute top-28 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
               Loading map: {loadingPercentage}%
+            </div>
+          )}
+
+          {loadingPercentage >= 100 && currentZoom < 15 && (
+            <div className="absolute top-28 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
+              Zoom in to see building shadows
             </div>
           )}
         </div>
@@ -340,6 +348,7 @@ export default function MapUI() {
             initialDate={currentDate}
             onMarkerSelected={handleMarkerSelected}
             isMobile={isMobile}
+            onZoomLevelChange={setCurrentZoom}
           />
         </div>
 
@@ -453,8 +462,14 @@ export default function MapUI() {
         </div>
 
         {loadingPercentage > 0 && loadingPercentage < 100 && (
-          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
+          <div className="absolute top-28 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
             Loading map: {loadingPercentage}%
+          </div>
+        )}
+
+        {loadingPercentage >= 100 && currentZoom < 15 && (
+          <div className="absolute top-28 left-1/2 -translate-x-1/2 z-10 rounded-md bg-white/25 backdrop-blur-md px-3 py-2 text-sm shadow-lg border border-white/20">
+            Zoom in to see building shadows
           </div>
         )}
 

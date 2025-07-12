@@ -35,6 +35,7 @@ interface MapViewProps {
         })
       | null
   ) => void
+  onZoomLevelChange?: (zoom: number) => void
 }
 
 interface MapViewRef {
@@ -78,6 +79,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       initialDate,
       isMobile = false,
       onMarkerSelected,
+      onZoomLevelChange,
     },
     ref
   ) => {
@@ -737,8 +739,13 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
         if (map.current) {
           map.current.on("moveend", updateLabelVisibility)
-          map.current.on("zoomend", updateLabelVisibility)
+          map.current.on("zoomend", () => {
+            updateLabelVisibility()
+            onZoomLevelChange?.(map.current!.getZoom())
+          })
         }
+        // Emit initial zoom level after the map is ready
+        onZoomLevelChange?.(map.current!.getZoom())
         setTimeout(updateLabelVisibility, 0)
       })
 
@@ -754,7 +761,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           map.current = null
         }
       }
-    }, [onLoadingProgress, defaultLocation, initialDate]) // Added defaultLocation and initialDate to dependency array
+    }, [onLoadingProgress, defaultLocation, initialDate, onZoomLevelChange])
 
     useEffect(() => {
       if (shadeMap.current) {
