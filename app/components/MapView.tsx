@@ -93,17 +93,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       Map<string, { name?: string; place_id?: string; type?: string }>
     >(new Map())
 
-    useEffect(() => {
-      if (map.current) {
-        map.current.flyTo({
-          center: [defaultLocation.lng, defaultLocation.lat],
-          zoom: 15, // Or current zoom level if you want to preserve it
-          essential: true,
-          duration: 1500,
-        })
-      }
-    }, [defaultLocation]) // Re-run effect when defaultLocation changes
-
     const createMarkerElement = (
       coordinates: Location,
       name?: string,
@@ -644,7 +633,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
     useEffect(() => {
       if (map.current) return // Initialize map only once
-
+      console.log("defaultLocation", defaultLocation)
       map.current = new mapboxgl.Map({
         accessToken: MAPBOX_API_KEY,
         container: mapContainer.current!,
@@ -761,13 +750,24 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           map.current = null
         }
       }
-    }, [onLoadingProgress, defaultLocation, initialDate, onZoomLevelChange])
+    }, [onLoadingProgress, initialDate, onZoomLevelChange])
 
     useEffect(() => {
       if (shadeMap.current) {
         setDate(initialDate)
       }
     }, [initialDate])
+
+    useEffect(() => {
+      if (map.current) {
+        map.current.flyTo({
+          center: [defaultLocation.lng, defaultLocation.lat],
+          zoom: 15, // Or current zoom level if you want to preserve it
+          essential: true,
+          duration: 1500,
+        })
+      }
+    }, [defaultLocation]) // Re-run effect when defaultLocation changes
 
     const checkOverlap = (rect1: DOMRect, rect2: DOMRect): boolean => {
       return !(

@@ -56,8 +56,6 @@ const PlaceCard = ({
       )}&maxwidth=400&maxheight=400`
     : null
 
-  console.log("photoUrl", photoUrl)
-
   const hasSun = hasSunlight(
     dateTime,
     place.geometry.location.lat,
