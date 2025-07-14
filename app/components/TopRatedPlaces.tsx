@@ -226,7 +226,7 @@ export default function TopRatedPlaces({
   return (
     <div>
       <div
-        className="flex gap-2 mb-4 overflow-x-auto tab-scrollbar-hide -mx-2 px-2"
+        className="flex gap-2 mb-4 overflow-x-auto tab-scrollbar-hide -mx-2 px-5"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {PLACE_TYPE_TABS.map((tab) => (
@@ -255,7 +255,7 @@ export default function TopRatedPlaces({
           </div>
         </Alert>
       ) : (
-        <div className="grid gap-4 grid-cols-1">
+        <div className="grid gap-4 grid-cols-1 px-3">
           {filteredPlaces.map((place) => (
             <PlaceCard
               key={place.place_id}

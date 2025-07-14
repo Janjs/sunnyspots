@@ -426,8 +426,8 @@ export default function MapUI() {
         {/* Desktop sidebar */}
         {!isMobile && (
           <div className="absolute left-4 top-4 bottom-4 z-10 flex flex-col gap-4 w-96">
-            <div className="h-full flex p-4 gap-3 flex-col rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
-              <div className="p-1">
+            <div className="h-full flex gap-3 flex-col rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+              <div className="p-1 pt-4 px-4">
                 <PlacesAutocomplete
                   onPlaceSelect={handlePlaceSelect}
                   defaultLocation={DEFAULT_LOCATION}
