@@ -255,7 +255,7 @@ export default function TopRatedPlaces({
           </div>
         </Alert>
       ) : (
-        <div className="grid gap-4 grid-cols-1 px-3">
+        <div className="grid gap-4 grid-cols-1 px-3 pb-4">
           {filteredPlaces.map((place) => (
             <PlaceCard
               key={place.place_id}
