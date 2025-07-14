@@ -43,6 +43,17 @@ export default function CityAutocomplete({
     setInputValue(initialValue)
   }, [initialValue])
 
+  // Highlight the initial city text so new typing immediately replaces it
+  useEffect(() => {
+    if (initialValue && inputRef.current) {
+      // Wait for the input to render then focus and select text
+      requestAnimationFrame(() => {
+        inputRef.current?.focus({ preventScroll: true })
+        inputRef.current?.select()
+      })
+    }
+  }, [initialValue])
+
   useEffect(() => {
     return () => {
       if (debounceTimeoutRef.current) {

@@ -312,7 +312,7 @@ export default function MapUI() {
             <MapView
               ref={mapViewRef}
               onLoadingProgress={setLoadingPercentage}
-              defaultLocation={currentLocation}
+              location={currentLocation}
               initialDate={currentDate}
               onMarkerSelected={handleMarkerSelected}
               isMobile={isMobile}
@@ -344,7 +344,7 @@ export default function MapUI() {
           <MapView
             ref={mapViewRef}
             onLoadingProgress={setLoadingPercentage}
-            defaultLocation={currentLocation}
+            location={currentLocation}
             initialDate={currentDate}
             onMarkerSelected={handleMarkerSelected}
             isMobile={isMobile}

@@ -50,9 +50,10 @@ export default function EditCityModal({
       setInputValue(currentCity)
       setSuggestions([])
       setIsLoading(false)
-      // Focus the input when modal opens
+      // Focus the input and select text when modal opens
       setTimeout(() => {
         inputRef.current?.focus()
+        inputRef.current?.select()
       }, 100)
     } else {
       setInputValue("")
