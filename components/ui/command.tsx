@@ -116,9 +116,8 @@ const CommandItem = React.forwardRef<
     ref={ref}
     className={cn(
       // Subtle glassy highlight: more blur, very light background on hover/selected
-      "relative flex cursor-default gap-2 select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 text-white backdrop-blur-sm",
+      "relative flex cursor-default gap-2 select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 text-white",
       "hover:bg-white/10 hover:backdrop-blur-lg",
-      "data-[selected=true]:bg-white/10 data-[selected=true]:backdrop-blur-lg data-[selected=true]:text-white",
       className
     )}
     {...props}

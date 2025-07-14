@@ -448,7 +448,7 @@ export default function MapUI() {
 
         {/* Selected place info panel */}
         <div
-          className={`absolute top-4 z-10 ${
+          className={`absolute top-4 bottom-4 z-10 ${
             isMobile ? "left-0 right-0 px-4" : "right-4"
           }`}
         >

@@ -91,10 +91,9 @@ export default function InfoPanel({
 
   return (
     <div
-      className="relative flex p-3 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg"
+      className="relative flex flex-col h-full overflow-y-auto rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg"
       style={{
         width: isMobile ? "100%" : "20rem",
-        minHeight: isMobile ? "auto" : "10rem",
         marginTop: isMobile ? "6rem" : "0",
       }}
     >

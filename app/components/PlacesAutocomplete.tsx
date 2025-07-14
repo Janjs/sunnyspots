@@ -159,7 +159,7 @@ export default function PlacesAutocomplete({
         )}
 
         {value.trim().length > 0 && places.length > 0 && (
-          <CommandList className="bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
+          <CommandList className="">
             <CommandEmpty className="text-muted-foreground">
               No places found.
             </CommandEmpty>
@@ -171,16 +171,8 @@ export default function PlacesAutocomplete({
                   onSelect={() => {
                     handleSelect(place)
                   }}
-                  className="text-popover-foreground hover:bg-white/10 hover:backdrop-blur-lg"
+                  className="bg-transparent text-popover-foreground hover:bg-accent hover:text-accent-foreground"
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4 text-primary",
-                      value === place.structuredFormat.mainText.text
-                        ? "opacity-100"
-                        : "opacity-0"
-                    )}
-                  />
                   <span>{place.structuredFormat.mainText.text}</span>
                   <span className="ml-2 text-muted-foreground">
                     {place.structuredFormat.secondaryText.text}
