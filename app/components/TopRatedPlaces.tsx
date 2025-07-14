@@ -233,11 +233,11 @@ export default function TopRatedPlaces({
           <button
             key={tab.value}
             type="button"
-            className={`px-4 py-1 rounded-full text-sm font-medium transition-colors whitespace-nowrap
+            className={`px-4 py-1 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap backdrop-blur-md bg-transparent border border-transparent
               ${
                 selectedPlaceType === tab.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted/70"
+                  ? "bg-white/80 text-primary border-primary/60"
+                  : "text-muted-foreground hover:bg-white/80 hover:text-foreground"
               }
               `}
             onClick={() => setSelectedPlaceType(tab.value)}

@@ -26,7 +26,7 @@ export default function CityTitle({
     <h1
       className={`${
         isMobile ? "text-base flex-col items-start" : "text-xl items-center"
-      } font-semibold text-foreground flex`}
+      }  text-foreground flex`}
     >
       {isMobile ? (
         <>
@@ -65,7 +65,7 @@ export default function CityTitle({
               <TooltipTrigger asChild>
                 <div className="group relative flex items-center">
                   <span
-                    className="underline underline-offset-4 cursor-pointer hover:text-primary transition-colors duration-150"
+                    className="font-semibold cursor-pointer hover:text-primary transition-colors duration-150"
                     onClick={onEditRequest}
                     role="button"
                     tabIndex={0}

@@ -135,7 +135,7 @@ export default function PlacesAutocomplete({
 
   return (
     <div>
-      <Command className="relative bg-white/25 backdrop-blur-md border border-white/20 rounded-md overflow-visible shadow-lg">
+      <Command className="relative bg-white/25 hover:bg-white/50 transition-all duration-200 backdrop-blur-md border border-white/20 rounded-md overflow-visible shadow-lg">
         <div className="flex items-center px-3" cmdk-input-wrapper="">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <CommandPrimitive.Input

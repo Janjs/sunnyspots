@@ -354,11 +354,11 @@ export default function MapUI() {
 
         {/* City Title and Weather Display */}
         <div
-          className={`absolute top-4 z-10 px-4 py-4 rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg ${
+          className={`absolute top-4 z-10 px-4 gap-4 py-4 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 shadow-lg ${
             isMobile ? "left-4 right-4 w-auto" : "left-1/2 -translate-x-1/2"
           }`}
         >
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between px-2 gap-8 items-center">
             <div className={isMobile ? "ml-12" : ""}>
               <CityTitle
                 city={currentCity}
