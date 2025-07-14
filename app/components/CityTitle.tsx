@@ -36,7 +36,7 @@ export default function CityTitle({
               <TooltipTrigger asChild>
                 <div className="group relative flex items-center">
                   <span
-                    className="underline underline-offset-4 cursor-pointer hover:text-primary transition-colors duration-150"
+                    className="font-semibold  cursor-pointer hover:text-primary transition-colors duration-150"
                     onClick={onEditRequest}
                     role="button"
                     tabIndex={0}
@@ -51,7 +51,7 @@ export default function CityTitle({
                   </span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="top" align="center" className="text-xs">
+              <TooltipContent side="right" align="center" className="text-xs">
                 Open city search (⌘+K)
               </TooltipContent>
             </Tooltip>

@@ -214,15 +214,21 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
 
       iconContainer.className = cn(
         buttonVariants({ variant: "secondary", size: "icon" }),
-        "rounded-full shadow-md hover:bg-white/90 relative"
+        "shadow-md hover:bg-white/90 relative"
       )
       iconContainer.style.backgroundColor = bgColor
-      iconContainer.style.width = "1.5rem"
-      iconContainer.style.height = "1.5rem"
-      iconContainer.style.padding = "0.15rem"
+      iconContainer.style.width = "2rem"
+      iconContainer.style.height = "2rem"
+      iconContainer.style.padding = "0"
       iconContainer.style.display = "flex"
       iconContainer.style.justifyContent = "center"
       iconContainer.style.alignItems = "center"
+      iconContainer.style.position = "relative"
+
+      // Create teardrop/pin shape
+      iconContainer.style.borderRadius = "50% 50% 50% 0"
+      iconContainer.style.transform = "rotate(-45deg)"
+      iconContainer.style.border = "2px solid rgba(255, 255, 255, 0.3)"
 
       const iconElement = document.createElement("div")
       iconElement.innerHTML = iconSVG
@@ -230,6 +236,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       iconElement.style.display = "flex"
       iconElement.style.justifyContent = "center"
       iconElement.style.alignItems = "center"
+      iconElement.style.transform = "rotate(45deg)" // Counter-rotate the icon
+      iconElement.style.width = "1.2rem"
+      iconElement.style.height = "1.2rem"
 
       iconContainer.appendChild(iconElement)
 
@@ -302,7 +311,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         const marker = new mapboxgl.Marker({
           element: markerElement,
           anchor: "bottom",
-          offset: [0, isMobile ? 180 : 0],
+          offset: [0, isMobile ? -50 : -5],
         })
           .setLngLat([place.geometry.location.lng, place.geometry.location.lat])
           .addTo(map.current!)
@@ -415,7 +424,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       const marker = new mapboxgl.Marker({
         element: markerElement,
         anchor: "bottom",
-        offset: [0, isMobile ? -60 : 0],
+        offset: [0, isMobile ? -50 : -5],
       })
         .setLngLat([coordinates.lng, coordinates.lat])
         .addTo(map.current!)
@@ -514,7 +523,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
           const newMarker = new mapboxgl.Marker({
             element: newElement,
             anchor: "bottom",
-            offset: [0, isMobile ? -60 : 0],
+            offset: [0, isMobile ? -50 : -5],
           })
             .setLngLat([data.coords.lng, data.coords.lat])
             .addTo(map.current!)
