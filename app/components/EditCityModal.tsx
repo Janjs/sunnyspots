@@ -121,6 +121,16 @@ export default function EditCityModal({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       onClose()
+    } else if (e.key === "Enter") {
+      e.preventDefault()
+      if (suggestions.length > 0) {
+        // Select the first suggestion
+        handleSelectSuggestion(suggestions[0])
+      } else if (inputValue.trim()) {
+        // If no suggestions but there's input, save the current input
+        onSave({ name: inputValue.trim() })
+        onClose()
+      }
     }
   }
 
@@ -130,7 +140,7 @@ export default function EditCityModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/20 backdrop-blur-sm"
@@ -173,7 +183,14 @@ export default function EditCityModal({
               tabIndex={-1}
               aria-label="Press Enter to select"
               className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center rounded-lg border border-transparent bg-transparent transition-all duration-150 hover:border-white/30 hover:bg-white/10 hover:backdrop-blur focus:border-white/30 focus:bg-white/10 focus:backdrop-blur"
-              disabled
+              onClick={() => {
+                if (suggestions.length > 0) {
+                  handleSelectSuggestion(suggestions[0])
+                } else if (inputValue.trim()) {
+                  onSave({ name: inputValue.trim() })
+                  onClose()
+                }
+              }}
             >
               <CornerDownLeft className="h-5 w-5 text-white/60" />
             </button>

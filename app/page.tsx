@@ -556,7 +556,7 @@ export default function MapUI() {
 
         {/* City Title and Weather Display */}
         <div
-          className={`absolute top-4 z-10 px-4 gap-4 py-4 rounded-lg bg-white/10 hover:bg-white/30 transition-colors duration-150 backdrop-blur-md border border-white/20 shadow-lg cursor-pointer ${
+          className={`absolute top-4 z-30 px-4 gap-4 py-4 rounded-lg bg-white/10 hover:bg-white/30 transition-colors duration-150 backdrop-blur-md border border-white/20 shadow-lg cursor-pointer ${
             isMobile ? "left-4 right-4 w-auto" : "left-1/2 -translate-x-1/2"
           }`}
           role="button"
@@ -592,7 +592,7 @@ export default function MapUI() {
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute left-8 top-[2.35rem] z-20 bg-white/20 backdrop-blur-sm rounded-lg shadow-sm overflow-hidden group"
+                className="absolute left-8 top-[2.35rem] z-40 bg-white/20 backdrop-blur-sm rounded-lg shadow-sm overflow-hidden group"
               >
                 <Menu className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:scale-110" />
                 <span className="sr-only">Open places menu</span>
