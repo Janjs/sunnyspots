@@ -354,9 +354,18 @@ export default function MapUI() {
 
         {/* City Title and Weather Display */}
         <div
-          className={`absolute top-4 z-10 px-4 gap-4 py-4 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 shadow-lg ${
+          className={`absolute top-4 z-10 px-4 gap-4 py-4 rounded-lg bg-white/10 hover:bg-white/30 transition-colors duration-150 backdrop-blur-md border border-white/20 shadow-lg cursor-pointer ${
             isMobile ? "left-4 right-4 w-auto" : "left-1/2 -translate-x-1/2"
           }`}
+          role="button"
+          tabIndex={0}
+          onClick={() => setEditCityOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              setEditCityOpen(true)
+            }
+          }}
         >
           <div className="flex justify-between px-2 gap-8 items-center">
             <div className={isMobile ? "ml-12" : ""}>

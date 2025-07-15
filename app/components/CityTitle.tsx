@@ -26,7 +26,16 @@ export default function CityTitle({
     <h1
       className={`${
         isMobile ? "text-base flex-col items-start" : "text-xl items-center"
-      }  text-foreground flex`}
+      } text-foreground flex`}
+      role="button"
+      tabIndex={0}
+      onClick={onEditRequest}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onEditRequest()
+        }
+      }}
     >
       {isMobile ? (
         <>
@@ -35,18 +44,7 @@ export default function CityTitle({
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="group relative flex items-center">
-                  <span
-                    className="font-semibold  cursor-pointer hover:text-primary transition-colors duration-150"
-                    onClick={onEditRequest}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault()
-                        onEditRequest()
-                      }
-                    }}
-                  >
+                  <span className="font-semibold cursor-pointer hover:text-primary transition-colors duration-150">
                     {city || placeholder}
                   </span>
                 </div>
@@ -64,18 +62,7 @@ export default function CityTitle({
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="group relative flex items-center">
-                  <span
-                    className="font-semibold cursor-pointer hover:text-primary transition-colors duration-150"
-                    onClick={onEditRequest}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault()
-                        onEditRequest()
-                      }
-                    }}
-                  >
+                  <span className="font-semibold cursor-pointer hover:text-primary transition-colors duration-150">
                     {city || placeholder}
                   </span>
                 </div>
