@@ -131,15 +131,3 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Development vs Production
 
 The app includes a development mode that uses placeholder images instead of making actual Google Places photo API calls. Set `APP_ENV=development` in your environment variables to enable this mode.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-[Add your license information here]
