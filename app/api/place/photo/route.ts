@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 
-// const CACHE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days in seconds
-const CACHE_MAX_AGE = 5 // 5 seconds
+const CACHE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days in seconds
 
 export async function GET(request: NextRequest) {
   console.log("request", request)
