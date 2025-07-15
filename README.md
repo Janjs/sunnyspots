@@ -1,10 +1,10 @@
-# Sunny Spots
+# ☀️ Sunny Spots
 
 A map application to discover when cafes, parks, restaurants and bars get sunlight throughout the day. Built with Next.js 15, TypeScript, and integrated with multiple mapping and weather APIs.
 
 ![Sunny Spots Screenshot](screenshot.png)
 
-## Features
+## ✨ Features
 
 - **Interactive Shadow Map**: Real-time shadow simulation showing sunlight patterns
 - **Place Discovery**: Find cafes, restaurants, bars, and parks with outdoor seating
@@ -13,7 +13,7 @@ A map application to discover when cafes, parks, restaurants and bars get sunlig
 - **Responsive Design**: Mobile-friendly interface with adaptive layouts
 - **Auto-complete Search**: Smart location and place search powered by Google Places
 
-## Tech Stack
+## ⚡ Tech Stack
 
 - **Frontend**: Next.js 15, React 18, TypeScript
 - **Styling**: Tailwind CSS with custom design system
@@ -21,7 +21,7 @@ A map application to discover when cafes, parks, restaurants and bars get sunlig
 - **APIs**: Google Places, OpenWeather, ShadeMap
 - **UI Components**: Radix UI primitives with custom styling
 
-## Prerequisites
+## 📋 Prerequisites
 
 - Node.js 18+ and pnpm
 - API keys for the following services:
@@ -30,22 +30,22 @@ A map application to discover when cafes, parks, restaurants and bars get sunlig
   - Mapbox
   - ShadeMap
 
-## Getting Started
+## 🌅 Getting Started
 
-### 1. Clone the repository
+### 1. 🌱 Clone the repository
 
 ```bash
 git clone <repository-url>
 cd sunnyspots
 ```
 
-### 2. Install dependencies
+### 2. 📦 Install dependencies
 
 ```bash
 pnpm install
 ```
 
-### 3. Set up environment variables
+### 3. �� Set up environment variables
 
 Copy the example environment file and add your API keys:
 
@@ -72,7 +72,7 @@ NEXT_PUBLIC_SHADEMAP_API_KEY=your_shademap_api_key_here
 APP_ENV=development
 ```
 
-### 4. Run the development server
+### 4. ⚡ Run the development server
 
 ```bash
 pnpm dev
@@ -80,9 +80,9 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## API Keys Setup
+## 🔑 API Keys Setup
 
-### Google Places API
+### 📍 Google Places API
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing one
@@ -93,32 +93,32 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 4. Create credentials (API Key)
 5. Restrict the API key to your domains in production
 
-### OpenWeather API
+### 🌦️ OpenWeather API
 
 1. Sign up at [OpenWeather](https://openweathermap.org/api)
 2. Subscribe to the "One Call API 3.0" (free tier available)
 3. Get your API key from the dashboard
 
-### Mapbox
+### 🗺️ Mapbox
 
 1. Sign up at [Mapbox](https://account.mapbox.com/)
 2. Get your default public token from the dashboard
 3. The token will start with `pk.`
 
-### ShadeMap API
+### 🌑 ShadeMap API
 
 1. Sign up at [ShadeMap](https://shademap.app/)
 2. Get your API key from the dashboard
 3. This is used for real-time shadow simulation
 
-## Available Scripts
+## 📜 Available Scripts
 
 - `pnpm dev` - Start development server with Turbo
 - `pnpm build` - Build the application for production
 - `pnpm start` - Start the production server
 - `pnpm lint` - Run ESLint
 
-## Environment Variables
+## 🌍 Environment Variables
 
 | Variable                       | Type   | Description                                        |
 | ------------------------------ | ------ | -------------------------------------------------- |
@@ -128,6 +128,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | `NEXT_PUBLIC_SHADEMAP_API_KEY` | Public | ShadeMap API key for shadow simulation             |
 | `APP_ENV`                      | Server | Set to "development" to use placeholder images     |
 
-## Development vs Production
+## 🔄 Development vs Production
 
 The app includes a development mode that uses placeholder images instead of making actual Google Places photo API calls. Set `APP_ENV=development` in your environment variables to enable this mode.
