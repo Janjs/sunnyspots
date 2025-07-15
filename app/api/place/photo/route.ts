@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const CACHE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days in seconds
+// const CACHE_MAX_AGE = 60 * 60 * 24 * 7 // 7 days in seconds
+const CACHE_MAX_AGE = 5 // 5 seconds
 
 export async function GET(request: NextRequest) {
+  console.log("request", request)
   try {
     const { searchParams } = new URL(request.url)
     const photoReference = searchParams.get("photoReference")
@@ -11,11 +13,9 @@ export async function GET(request: NextRequest) {
     if (!photoReference) {
       return new NextResponse("Missing photo reference", { status: 400 })
     }
-
+    console.log("APP_ENV", process.env.APP_ENV)
     // In development mode, return a local placeholder image instead of calling Google Maps API
-    const isDevelopment =
-      process.env.NODE_ENV === "development" ||
-      process.env.NODE_ENV === undefined
+    const isDevelopment = process.env.APP_ENV === "development"
     if (isDevelopment) {
       console.log("isDevelopment")
       // Read the placeholder image from the public directory
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(googlePhotoUrl, {
       cache: "force-cache",
       next: {
-        revalidate: 60 * 60 * 24 * 7, // 7 days
+        revalidate: CACHE_MAX_AGE, // 7 days
       },
     })
 
