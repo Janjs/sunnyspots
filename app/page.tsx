@@ -389,10 +389,10 @@ export default function MapUI() {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="p-0 w-[85%] max-w-[350px] [&>button]:hidden"
+              className="p-0 w-[85%] max-w-[350px] [&>button]:hidden  bg-white/25 backdrop-blur-md"
             >
               <SheetTitle className="sr-only">Places Navigation</SheetTitle>
-              <div className="h-full flex p-4 gap-3 flex-col bg-white/25 backdrop-blur-md relative">
+              <div className="h-full flex gap-3 flex-col bg-white/25 backdrop-blur-md relative">
                 {/* Custom close button positioned outside the sidebar */}
                 <Button
                   variant="outline"
@@ -403,13 +403,13 @@ export default function MapUI() {
                   <X className="h-5 w-5 transition-all duration-300 ease-in-out group-hover:rotate-90 group-hover:scale-110" />
                   <span className="sr-only">Close menu</span>
                 </Button>
-                <div className="p-1">
+                <div className="pt-4 px-4">
                   <PlacesAutocomplete
                     onPlaceSelect={handlePlaceSelect}
                     defaultLocation={DEFAULT_LOCATION}
                   />
                 </div>
-                <div className="flex-1 overflow-y-auto p-1">
+                <div className="flex-1 pt-1 overflow-y-auto">
                   <TopRatedPlaces
                     location={currentLocation}
                     dateTime={currentDate}
@@ -427,13 +427,13 @@ export default function MapUI() {
         {!isMobile && (
           <div className="absolute left-4 top-4 bottom-4 z-10 flex flex-col gap-4 w-96">
             <div className="h-full flex gap-3 flex-col rounded-lg bg-white/25 backdrop-blur-md border border-white/20 shadow-lg">
-              <div className="p-1 pt-4 px-4">
+              <div className="p-1 pt-4 px-3">
                 <PlacesAutocomplete
                   onPlaceSelect={handlePlaceSelect}
                   defaultLocation={DEFAULT_LOCATION}
                 />
               </div>
-              <div className="flex-1 overflow-y-auto p-1">
+              <div className="flex-1 overflow-y-auto px-1">
                 <TopRatedPlaces
                   location={currentLocation}
                   dateTime={currentDate}

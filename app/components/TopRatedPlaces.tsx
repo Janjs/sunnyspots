@@ -249,11 +249,8 @@ export default function TopRatedPlaces({
   }
 
   return (
-    <div>
-      <div
-        className="flex gap-2 mb-4 overflow-x-auto tab-scrollbar-hide -mx-2 px-5"
-        style={{ WebkitOverflowScrolling: "touch" }}
-      >
+    <div className="flex flex-col h-full overflow-x-hidden">
+      <div className="flex gap-2 pb-3 px-2 flex-shrink-0 overflow-x-auto tab-scrollbar-hide">
         {PLACE_TYPE_TABS.map((tab) => (
           <button
             key={tab.value}
@@ -282,16 +279,22 @@ export default function TopRatedPlaces({
           </Alert>
         </div>
       ) : (
-        <div className="grid gap-4 grid-cols-1 px-3 pb-4">
-          {filteredPlaces.map((place) => (
-            <PlaceCard
-              key={place.place_id}
-              place={place}
-              dateTime={dateTime}
-              isSelected={place.place_id === selectedPlaceId}
-              onClick={() => handlePlaceSelect(place)}
-            />
-          ))}
+        <div
+          className="flex-1 w-full overflow-y-auto relative  tab-scrollbar-hide"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          <div className="grid gap-4 grid-cols-1 px-3 pb-4 pt-1">
+            {filteredPlaces.map((place) => (
+              <div key={place.place_id} className="w-full">
+                <PlaceCard
+                  place={place}
+                  dateTime={dateTime}
+                  isSelected={place.place_id === selectedPlaceId}
+                  onClick={() => handlePlaceSelect(place)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
