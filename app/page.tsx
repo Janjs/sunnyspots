@@ -90,6 +90,12 @@ export default function MapUI() {
   const [infoPanelVisible, setInfoPanelVisible] = useState(true)
   const [currentZoom, setCurrentZoom] = useState(15)
 
+  const [hasSeenAbout, setHasSeenAbout] = useState(false)
+
+  // Local storage keys for persistence
+  const LOCAL_STORAGE_SELECTED_CITY = "selectedCity"
+  const LOCAL_STORAGE_HAS_SEEN_MODAL = "hasSeenCityModal"
+
   // Only set layout state once we've detected device type
   useEffect(() => {
     if (isMobile !== undefined) {
@@ -114,6 +120,56 @@ export default function MapUI() {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
+
+  // Load saved city and modal visibility from localStorage on initial mount
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const hasSeenModal = window.localStorage.getItem(
+      LOCAL_STORAGE_HAS_SEEN_MODAL
+    )
+
+    if (!hasSeenModal) {
+      setEditCityOpen(true)
+    } else {
+      setHasSeenAbout(true)
+    }
+
+    const storedCity = window.localStorage.getItem(LOCAL_STORAGE_SELECTED_CITY)
+
+    if (storedCity) {
+      try {
+        const parsed: {
+          name: string
+          coordinates?: { lat: number; lng: number }
+          placeId?: string
+        } = JSON.parse(storedCity)
+
+        if (parsed.name) {
+          setCurrentCity(parsed.name)
+        }
+
+        if (parsed.coordinates) {
+          setCurrentLocation(parsed.coordinates)
+          mapViewRef.current?.centerOnLocation(parsed.coordinates)
+        } else if (parsed.placeId) {
+          ;(async () => {
+            const details = await fetchPlaceDetails(parsed.placeId as string)
+            if (details?.geometry?.location) {
+              const coords = {
+                lat: details.geometry.location.lat,
+                lng: details.geometry.location.lng,
+              }
+              setCurrentLocation(coords)
+              mapViewRef.current?.centerOnLocation(coords)
+            }
+          })()
+        }
+      } catch (e) {
+        console.error("Failed to parse stored city from localStorage", e)
+      }
+    }
   }, [])
 
   const handleSearchResults = (results: Place[]) => {
@@ -377,6 +433,7 @@ export default function MapUI() {
     placeId?: string
   }) => {
     const newCityName = newCityData.name.trim()
+    let finalCoords = DEFAULT_LOCATION
     if (newCityName) {
       setCurrentCity(newCityName)
 
@@ -399,12 +456,14 @@ export default function MapUI() {
             }
             setCurrentLocation(newCoords)
             mapViewRef.current?.centerOnLocation(newCoords)
+            finalCoords = newCoords
           } else {
             console.warn(
               "New city selected from autocomplete lacked geometry. Resetting location."
             )
             setCurrentLocation(DEFAULT_LOCATION)
             mapViewRef.current?.centerOnLocation(DEFAULT_LOCATION)
+            finalCoords = DEFAULT_LOCATION
           }
         } catch (error) {
           console.error(
@@ -413,6 +472,7 @@ export default function MapUI() {
           )
           setCurrentLocation(DEFAULT_LOCATION)
           mapViewRef.current?.centerOnLocation(DEFAULT_LOCATION)
+          finalCoords = DEFAULT_LOCATION
         }
       } else {
         console.warn(
@@ -420,6 +480,25 @@ export default function MapUI() {
         )
         setCurrentLocation(DEFAULT_LOCATION)
         mapViewRef.current?.centerOnLocation(DEFAULT_LOCATION)
+        finalCoords = DEFAULT_LOCATION
+      }
+    }
+
+    // Persist user selection and mark modal as seen
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(
+          LOCAL_STORAGE_SELECTED_CITY,
+          JSON.stringify({
+            name: newCityName,
+            coordinates: finalCoords,
+            placeId: newCityData.placeId,
+          })
+        )
+        window.localStorage.setItem(LOCAL_STORAGE_HAS_SEEN_MODAL, "true")
+        setHasSeenAbout(true)
+      } catch (e) {
+        console.error("Failed to save city to localStorage", e)
       }
     }
     setEditCityOpen(false)
@@ -668,6 +747,7 @@ export default function MapUI() {
         onSave={handleSaveCity}
         placeholder="Enter city name e.g. Amsterdam"
         currentLocationForBias={currentLocation}
+        showAbout={!hasSeenAbout}
       />
 
       {/* Dynamic favicon that changes based on sunlight status */}

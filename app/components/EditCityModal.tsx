@@ -29,6 +29,7 @@ interface EditCityModalProps {
   onSave: (newCityData: { name: string; placeId?: string }) => void
   placeholder?: string
   currentLocationForBias?: { lat: number; lng: number }
+  showAbout?: boolean
 }
 
 export default function EditCityModal({
@@ -38,6 +39,7 @@ export default function EditCityModal({
   onSave,
   placeholder = "Search for a city...",
   currentLocationForBias,
+  showAbout = true,
 }: EditCityModalProps) {
   const [inputValue, setInputValue] = useState(currentCity)
   const [suggestions, setSuggestions] = useState<CitySuggestion[]>([])
@@ -135,8 +137,20 @@ export default function EditCityModal({
         onClick={onClose}
       />
 
-      {/* Search Bar */}
+      {/* Modal Container */}
       <div className="relative w-full max-w-2xl mx-4">
+        {/* About Section (shown only once) */}
+        {showAbout && (
+          <div className="mb-6 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl p-6 text-left">
+            <h2 className="text-lg font-semibold text-white">SunnySpots ☀️</h2>
+            <p className="mt-2 text-lg text-white/80">
+              Find the sunniest patios, terraces and parks near you. Select a
+              city to begin exploring:
+            </p>
+          </div>
+        )}
+
+        {/* Search Bar */}
         <Command className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/60" />
