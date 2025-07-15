@@ -151,7 +151,7 @@ export default function InfoPanel({
           {displayData.photos && displayData.photos.length > 0 && (
             <div
               className={`flex flex-col ${
-                isMobile ? "w-24 h-24 flex-shrink-0" : "w-full mt-3"
+                isMobile ? "w-24 h-24 flex-shrink-0 mr-8" : "w-full mt-3"
               }`}
             >
               <Carousel className="w-full h-full">
@@ -209,8 +209,16 @@ export default function InfoPanel({
                 </CarouselContent>
                 {displayData.photos.length > 1 && (
                   <>
-                    <CarouselPrevious className="absolute left-1 top-1/2 -translate-y-1/2 h-7 w-7 sm:h-8 sm:w-8 bg-white/70 hover:bg-white/90" />
-                    <CarouselNext className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 sm:h-8 sm:w-8 bg-white/70 hover:bg-white/90" />
+                    <CarouselPrevious
+                      className={`absolute top-1/2 -translate-y-1/2 h-7 w-7 sm:h-8 sm:w-8 bg-white/70 hover:bg-white/90 ${
+                        isMobile ? "left-[-35px]" : "left-1"
+                      }`}
+                    />
+                    <CarouselNext
+                      className={`absolute right-[-35px] top-1/2 -translate-y-1/2 h-7 w-7 sm:h-8 sm:w-8 bg-white/70 hover:bg-white/90 ${
+                        isMobile ? "right-[-35px]" : "right-1"
+                      }`}
+                    />
                   </>
                 )}
               </Carousel>
