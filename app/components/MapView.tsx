@@ -284,9 +284,12 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
         place_id?: string
         name?: string
         type: PlaceType
-      }[]
+      }[],
+      clearExisting: boolean = true
     ) => {
-      clearMarkers()
+      if (clearExisting) {
+        clearMarkers()
+      }
       places.forEach((place) => {
         const markerElement = createMarkerElement(
           place.geometry.location,
@@ -412,7 +415,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(
       name?: string,
       type?: PlaceType
     ) => {
-      clearMarkers()
+      // Don't clear existing markers - just add a new one
       const markerElement = createMarkerElement(coordinates, name, type)
       const coordKey = `${coordinates.lat.toFixed(6)},${coordinates.lng.toFixed(
         6

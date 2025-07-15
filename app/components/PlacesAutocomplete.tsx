@@ -1,14 +1,6 @@
 import { useState, useRef, useEffect } from "react"
-import { Check, Loader2, Search } from "lucide-react"
-import { Command as CommandPrimitive } from "cmdk"
+import { Loader2, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
 import {
   fetchPlaceSuggestions,
   fetchPlaceDetails,
@@ -54,15 +46,18 @@ export interface PlaceSelectData {
 
 interface PlacesAutocompleteProps {
   onPlaceSelect: (place: PlaceSelectData) => void
+  onSearchResults: (results: Place[]) => void
+  onSearchStateChange: (isSearching: boolean) => void
   defaultLocation: Location
 }
 
 export default function PlacesAutocomplete({
   onPlaceSelect,
+  onSearchResults,
+  onSearchStateChange,
   defaultLocation,
 }: PlacesAutocompleteProps) {
   const [value, setValue] = useState("")
-  const [places, setPlaces] = useState<Place[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -83,12 +78,14 @@ export default function PlacesAutocomplete({
     }
 
     if (!inputValue.trim()) {
-      setPlaces([])
+      onSearchResults([])
+      onSearchStateChange(false)
       setIsLoading(false)
       return
     }
 
     setIsLoading(true)
+    onSearchStateChange(true)
 
     debounceTimeoutRef.current = setTimeout(async () => {
       try {
@@ -97,57 +94,41 @@ export default function PlacesAutocomplete({
           defaultLocation
         )
         console.log("places suggestions:", fetchedPlaces)
-        setPlaces(fetchedPlaces)
+        onSearchResults(fetchedPlaces)
       } catch (error) {
         console.error("Error fetching place predictions:", error)
-        setPlaces([])
+        onSearchResults([])
       } finally {
         setIsLoading(false)
       }
     }, DEBOUNCE_DELAY)
   }
 
-  const handleSelect = async (place: Place) => {
+  const clearSearch = () => {
+    setValue("")
+    onSearchResults([])
+    onSearchStateChange(false)
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current)
     }
     setIsLoading(false)
-    setValue(place.structuredFormat.mainText.text)
-    setPlaces([])
-
-    try {
-      const placeDetails = await fetchPlaceDetails(place.placeId)
-      if (placeDetails) {
-        onPlaceSelect(placeDetails)
-      } else {
-        console.error(
-          "Failed to fetch place details for:",
-          place.structuredFormat.mainText.text
-        )
-      }
-    } catch (error) {
-      console.error(
-        "Error in handleSelect after fetching place details:",
-        error
-      )
-    }
   }
 
   return (
     <div>
-      <Command className="relative bg-white/25 hover:bg-white/50 transition-all duration-200 backdrop-blur-md border border-white/20 rounded-md overflow-visible shadow-lg">
+      <div className="relative bg-white/25 hover:bg-white/50 transition-all duration-200 backdrop-blur-md border border-white/20 rounded-md overflow-visible shadow-lg">
         <div className="flex items-center px-3" cmdk-input-wrapper="">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-          <CommandPrimitive.Input
+          <input
             ref={inputRef}
             value={value}
-            onValueChange={handleSearch}
+            onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search bars, restaurants, parks..."
             className={cn(
               "flex h-9 w-full rounded-md bg-transparent py-2 text-sm outline-none appearance-none",
               "placeholder:text-muted-foreground text-foreground",
               "disabled:cursor-not-allowed disabled:opacity-50",
-              "border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
+              "border-0 focus:border-0 focus:outline-none focus:ring-0"
             )}
           />
         </div>
@@ -157,32 +138,7 @@ export default function PlacesAutocomplete({
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>
         )}
-
-        {value.trim().length > 0 && places.length > 0 && (
-          <CommandList className="">
-            <CommandEmpty className="text-muted-foreground">
-              No places found.
-            </CommandEmpty>
-            <CommandGroup>
-              {places.map((place: Place) => (
-                <CommandItem
-                  key={place.placeId}
-                  value={place.structuredFormat.mainText.text}
-                  onSelect={() => {
-                    handleSelect(place)
-                  }}
-                  className="bg-transparent text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-                >
-                  <span>{place.structuredFormat.mainText.text}</span>
-                  <span className="ml-2 text-muted-foreground">
-                    {place.structuredFormat.secondaryText.text}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        )}
-      </Command>
+      </div>
     </div>
   )
 }
