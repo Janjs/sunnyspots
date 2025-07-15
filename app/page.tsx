@@ -13,7 +13,10 @@ import { TimePicker } from "@/app/components/TimePicker"
 import TopRatedPlaces from "@/app/components/TopRatedPlaces"
 import SunCalc from "suncalc"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
-import { fetchPlaceDetails } from "@/actions/googlePlaces"
+import {
+  fetchPlaceDetails,
+  searchTopOutdoorPlaces,
+} from "@/app/actions/googlePlaces"
 import CityTitle from "@/app/components/CityTitle"
 import EditCityModal from "@/app/components/EditCityModal"
 import WeatherDisplay from "@/app/components/WeatherDisplay"
@@ -441,6 +444,7 @@ export default function MapUI() {
       setPlacesData([])
       setSelectedPlace(null)
       setSelectedPlaceId(undefined)
+      setCoordinatesPlaceIdMap(new Map()) // Clear coordinate mapping
 
       if (newCityData.placeId) {
         try {
@@ -501,6 +505,13 @@ export default function MapUI() {
         console.error("Failed to save city to localStorage", e)
       }
     }
+    try {
+      const topPlaces = await searchTopOutdoorPlaces({ location: finalCoords })
+      handlePlacesLoaded(topPlaces) // Ensure markers show even when sidebar is closed
+    } catch (error) {
+      console.error("Failed to load top places for new city:", error)
+    }
+
     setEditCityOpen(false)
   }
 
