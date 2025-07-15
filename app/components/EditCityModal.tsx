@@ -140,7 +140,13 @@ export default function EditCityModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-4">
+    <div
+      className={`fixed inset-0 z-50 flex items-start justify-center ${
+        typeof window !== "undefined" && window.innerWidth <= 768
+          ? "pt-4"
+          : "pt-20"
+      }`}
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/20 backdrop-blur-sm"
