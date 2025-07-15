@@ -2,7 +2,16 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Star, Sun, Moon, Utensils, Martini, Trees, Info } from "lucide-react"
+import {
+  Star,
+  Sun,
+  Moon,
+  Utensils,
+  Martini,
+  Trees,
+  Info,
+  TriangleAlert,
+} from "lucide-react"
 import { searchTopOutdoorPlaces } from "@/app/actions/googlePlaces"
 import type { PlaceResult } from "@/app/actions/googlePlaces"
 import Image from "next/image"
@@ -215,12 +224,28 @@ export default function TopRatedPlaces({
 
   if (loading) {
     return (
-      <div className="p-4 text-muted-foreground">Loading top places...</div>
+      <div className="px-3">
+        <Alert>
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4" />
+            <AlertDescription>Loading...</AlertDescription>
+          </div>
+        </Alert>
+      </div>
     )
   }
 
   if (error) {
-    return <div className="p-4 text-destructive">Error: {error}</div>
+    return (
+      <div className="px-3">
+        <Alert variant="destructive">
+          <div className="flex items-center gap-2">
+            <TriangleAlert className="h-4 w-4" />
+            <AlertDescription>Error: {error}</AlertDescription>
+          </div>
+        </Alert>
+      </div>
+    )
   }
 
   return (
@@ -247,13 +272,15 @@ export default function TopRatedPlaces({
           </button>
         ))}
       </div>
-      {places.length === 0 ? (
-        <Alert>
-          <div className="flex items-center gap-2 ">
-            <Info className="h-4 w-4" />
-            <AlertDescription>No places found nearby</AlertDescription>
-          </div>
-        </Alert>
+      {places.length === 0 && !loading && !error ? (
+        <div className="px-3">
+          <Alert>
+            <div className="flex items-center gap-2 ">
+              <Info className="h-4 w-4" />
+              <AlertDescription>No places found nearby</AlertDescription>
+            </div>
+          </Alert>
+        </div>
       ) : (
         <div className="grid gap-4 grid-cols-1 px-3 pb-4">
           {filteredPlaces.map((place) => (

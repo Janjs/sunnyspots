@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
     const photoReference = searchParams.get("photoReference")
     const maxWidth = searchParams.get("maxwidth") || "800"
     const maxHeight = searchParams.get("maxheight") || "800"
-
     if (!photoReference) {
       return new NextResponse("Missing photo reference", { status: 400 })
     }
@@ -18,8 +17,7 @@ export async function GET(request: NextRequest) {
       process.env.NODE_ENV === "development" ||
       process.env.NODE_ENV === undefined
     if (isDevelopment) {
-      const placeholderImagePath = "/placeholder.jpg"
-
+      console.log("isDevelopment")
       // Read the placeholder image from the public directory
       const fs = await import("fs")
       const path = await import("path")
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     // Production mode - fetch from Google Maps API
     const googlePhotoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&maxheight=${maxHeight}&photo_reference=${photoReference}&key=${process.env.GOOGLE_API_KEY}`
-
+    console.log("googlePhotoUrl", googlePhotoUrl)
     const response = await fetch(googlePhotoUrl, {
       cache: "force-cache",
       next: {
